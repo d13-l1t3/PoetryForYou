@@ -616,7 +616,7 @@ def handle_message(
         print(f"[DEBUG] User telegram_id: {user.telegram_id}")
         
         # Check if user wants to cancel
-        if raw in ("❌ /отмена", "/отмена", "/cancel"):
+        if raw in ("❌ /отмена", "/отмена", "❌ /cancel", "/cancel"):
             print("[DEBUG] User cancelled selection")
             # Clean up selection data
             if hasattr(temp_memory, '_poem_selections'):
@@ -692,7 +692,8 @@ def handle_message(
         selection_data = poem_selections.get(user.telegram_id)
         if selection_data:
             options = selection_data.get("options", [])
-            btn_list = [str(i+1) for i in range(len(options))] + ["❌ /отмена"]
+            cancel_text = "❌ /cancel" if user.language_pref == "en" else "❌ /отмена"
+            btn_list = [str(i+1) for i in range(len(options))] + [cancel_text]
             print("[DEBUG] Showing options again")
             lang = user.language_pref
             return (
@@ -759,6 +760,25 @@ def handle_message(
             library = get_library_service(session)
             result = library.get_main_menu()
             return _make_library_response(result)
+        
+        if cmd in ("/search", "/поиск", "/найти"):
+            user.stage = "idle"
+            session.add(user)
+            session.commit()
+            lang = user.language_pref
+            return (
+                ("🔍 Type what you're looking for:\n\n"
+                 "• Poem title or first line\n"
+                 "• Author name\n"
+                 "• Or describe what kind of poem you want"
+                 if lang == "en" else
+                 "🔍 Напиши или скажи голосом, что ищешь:\n\n"
+                 "• Название или первую строку стиха\n"
+                 "• Имя автора\n"
+                 "• Или опиши, какой стих хочешь"),
+                ["/library", "/review"],
+                "search"
+            )
         
         if cmd in ("/learn", "/recommend"):
             return _start_poem_learning(session, user, temp_memory)

@@ -686,11 +686,12 @@ class GooglePoemSearch:
     def search_poems(self, query: str, limit: int = 5) -> List[ExternalPoem]:
         """Search for poems using Google Custom Search."""
         if not self.is_available():
+            print("[DEBUG] Google search: not available (missing API key or CSE ID)")
             return []
         
         try:
-            # Search for poem on stihi.ru or other sources
-            search_query = f"{query} стихотворение"
+            # Search for poem text
+            search_query = f"{query} стих текст"
             url = "https://www.googleapis.com/customsearch/v1"
             params = {
                 'key': self.api_key,
@@ -699,17 +700,28 @@ class GooglePoemSearch:
                 'num': min(limit * 2, 10)
             }
             
+            print(f"[DEBUG] Google search URL: {url} query={search_query!r}")
             response = self.client.get(url, params=params)
             data = response.json()
+            
+            if 'error' in data:
+                print(f"[DEBUG] Google API error: {data['error']}")
+                return []
+            
+            total_results = data.get('searchInformation', {}).get('totalResults', '0')
+            print(f"[DEBUG] Google: {total_results} total results")
             
             poems = []
             if 'items' in data:
                 for item in data['items']:
+                    print(f"[DEBUG] Google result: {item.get('title', '')} - {item.get('link', '')}")
                     poem = self._try_parse_poem(item)
                     if poem:
                         poems.append(poem)
                         if len(poems) >= limit:
                             break
+            else:
+                print(f"[DEBUG] Google: no 'items' in response. Keys: {list(data.keys())}")
             
             return poems
             
@@ -723,15 +735,16 @@ class GooglePoemSearch:
             url = item.get('link', '')
             title = item.get('title', '')
             # Clean title
-            for suffix in [' - стихотворение', ' | Стихи', ' — Русская поэзия', ' - Poetry Foundation']:
+            for suffix in [' - стихотворение', ' | Стихи', ' — Русская поэзия',
+                           ' - Poetry Foundation', ' – Русская поэзия',
+                           ' - Читать стихи', ' — Стихи русских поэтов']:
                 title = title.replace(suffix, '')
             title = title.strip()
             snippet = item.get('snippet', '')
             
-            # Accept any URL from our configured CSE sites
-            url_lower = url.lower()
-            if not any(site in url_lower for site in self.POETRY_SITES):
-                print(f"[DEBUG] Google: skipping non-poetry URL: {url}")
+            # CSE already restricts to poetry sites, so accept ALL results
+            # Just skip obviously non-poem URLs
+            if not url or any(skip in url for skip in ['/search', '/login', '/register']):
                 return None
             
             # Try to fetch the poem

@@ -21,8 +21,8 @@ _STRINGS = {
         "en": "Please choose a language: ru, en or mix",
     },
     "fallback_chat": {
-        "ru": "Привет! Чем могу помочь?\n\n📚 /library — библиотека\n🎯 /learn — учить стих\n🔄 /review — повторить",
-        "en": "Hi! How can I help?\n\n📚 /library — browse poems\n🎯 /learn — learn a poem\n🔄 /review — review",
+        "ru": "Привет! Чем могу помочь?\n\n📚 /library — библиотека\n🔍 /search — найти стих\n🔄 /review — повторить",
+        "en": "Hi! How can I help?\n\n📚 /library — browse poems\n🔍 /search — find a poem\n🔄 /review — review",
     },
 
     # Menu
@@ -31,8 +31,8 @@ _STRINGS = {
         "en": "📚 /library — browse poems",
     },
     "menu_learn": {
-        "ru": "🎯 /learn — учить стих",
-        "en": "🎯 /learn — learn a poem",
+        "ru": "🔍 /search — найти стих",
+        "en": "🔍 /search — find a poem",
     },
     "menu_review": {
         "ru": "🔄 /review — повторить",
@@ -249,16 +249,16 @@ _STRINGS = {
 
     # Fallback
     "fallback_chat": {
-        "ru": "Привет! Чем могу помочь?\n\n📚 /library — библиотека\n🎯 /learn — учить стих\n🔄 /review — повторить",
-        "en": "Hi! How can I help?\n\n📚 /library — browse poems\n🎯 /learn — learn a poem\n🔄 /review — review",
+        "ru": "Привет! Чем могу помочь?\n\n📚 /library — библиотека\n🔍 /search — найти стих\n🔄 /review — повторить",
+        "en": "Hi! How can I help?\n\n📚 /library — browse poems\n🔍 /search — find a poem\n🔄 /review — review",
     },
 }
 
 # Localized button sets
 _BUTTONS = {
     "main_menu": {
-        "ru": ["/library", "/learn", "/review"],
-        "en": ["/library", "/learn", "/review"],
+        "ru": ["/library", "/search", "/review"],
+        "en": ["/library", "/search", "/review"],
     },
     "learning": {
         "ru": ["/дальше", "/повторить", "/стоп"],
@@ -273,8 +273,8 @@ _BUTTONS = {
         "en": ["/hint", "/skip"],
     },
     "after_complete": {
-        "ru": ["/review", "/library", "/learn"],
-        "en": ["/review", "/library", "/learn"],
+        "ru": ["/review", "/library", "/search"],
+        "en": ["/review", "/library", "/search"],
     },
     "resume": {
         "ru": ["/дальше", "/сначала", "/стоп"],
