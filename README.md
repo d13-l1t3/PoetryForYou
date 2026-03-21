@@ -63,7 +63,7 @@ docker compose version
 3. **Clone the repo:**
 
 ```bash
-cd /opt
+cd /your_dir
 git clone https://github.com/YOUR_USERNAME/SWP.git poetry-bot
 cd poetry-bot
 ```
