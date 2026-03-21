@@ -1,0 +1,43 @@
+[
+  {
+    "language": "en",
+    "title": "Stopping by Woods on a Snowy Evening",
+    "author": "Robert Frost",
+    "tags": ["nature", "winter", "reflection"],
+    "difficulty": 2,
+    "text": "Whose woods these are I think I know.\\nHis house is in the village though;\\nHe will not see me stopping here\\nTo watch his woods fill up with snow.\\n\\nMy little horse must think it queer\\nTo stop without a farmhouse near\\nBetween the woods and frozen lake\\nThe darkest evening of the year.\\n\\nHe gives his harness bells a shake\\nTo ask if there is some mistake.\\nThe only other sound’s the sweep\\nOf easy wind and downy flake.\\n\\nThe woods are lovely, dark and deep,\\nBut I have promises to keep,\\nAnd miles to go before I sleep,\\nAnd miles to go before I sleep."
+  },
+  {
+    "language": "en",
+    "title": "If— (opening stanza)",
+    "author": "Rudyard Kipling",
+    "tags": ["stoicism", "character"],
+    "difficulty": 3,
+    "text": "If you can keep your head when all about you\\nAre losing theirs and blaming it on you,\\nIf you can trust yourself when all men doubt you,\\nBut make allowance for their doubting too;"
+  },
+  {
+    "language": "ru",
+    "title": "Я вас любил (первые строки)",
+    "author": "А. С. Пушкин",
+    "tags": ["love", "classic"],
+    "difficulty": 2,
+    "text": "Я вас любил: любовь ещё, быть может,\\nВ душе моей угасла не совсем;\\nНо пусть она вас больше не тревожит;\\nЯ не хочу печалить вас ничем."
+  },
+  {
+    "language": "ru",
+    "title": "У лукоморья дуб зелёный (отрывок)",
+    "author": "А. С. Пушкин",
+    "tags": ["fairytale", "classic"],
+    "difficulty": 2,
+    "text": "У лукоморья дуб зелёный;\\nЗлатая цепь на дубе том:\\nИ днём и ночью кот учёный\\nВсё ходит по цепи кругом;"
+  },
+  {
+    "language": "ru",
+    "title": "Послушайте! (отрывок)",
+    "author": "В. В. Маяковский",
+    "tags": ["mayakovsky", "modern", "emotion"],
+    "difficulty": 3,
+    "text": "Послушайте!\\nВедь, если звёзды зажигают —\\nзначит — это кому-нибудь нужно?\\nЗначит — кто-то хочет, чтобы они были?"
+  }
+]
+

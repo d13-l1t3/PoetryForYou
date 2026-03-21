@@ -1,0 +1,23 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.idea/
+.vscode/
+.windsurf/
+
+# Env files (NEVER commit real secrets)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Docker
+**/.docker/
+
+# Database
+*.db
