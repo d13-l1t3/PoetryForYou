@@ -659,11 +659,11 @@ def handle_message(
         selection_data = poem_selections.get(user.telegram_id)
         if selection_data:
             options = selection_data.get("options", [])
-            buttons = [str(i+1) for i in range(len(options))] + ["❌ /отмена"]
+            btn_list = [str(i+1) for i in range(len(options))] + ["❌ /отмена"]
             print("[DEBUG] Showing options again")
             return (
                 "Выбери номер стиха из списка выше или нажми ❌ /отмена",
-                buttons,
+                btn_list,
                 "choosing"
             )
     
@@ -940,7 +940,7 @@ def handle_message(
             
             # Build message with options showing first 2 lines of each
             message_lines = [f"🔍 Нашёл варианты по запросу \"{search_query}\":\n"]
-            buttons = []
+            btn_list = []
             
             for i, ext_poem in enumerate(external_poems[:5], 1):
                 preview = _get_first_lines(ext_poem.text, 2)
@@ -948,14 +948,14 @@ def handle_message(
                     f"\n{i}. 📜 {ext_poem.title} — {ext_poem.author}\n"
                     f"   \"{preview}\""
                 )
-                buttons.append(str(i))
+                btn_list.append(str(i))
             
             message_lines.append("\n\nВыбери номер стиха, который хочешь выучить:")
-            buttons.append("❌ /отмена")
+            btn_list.append("❌ /отмена")
             
             return (
                 "\n".join(message_lines),
-                buttons,
+                btn_list,
                 "choosing"
             )
         

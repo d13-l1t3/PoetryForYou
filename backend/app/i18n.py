@@ -20,6 +20,10 @@ _STRINGS = {
         "ru": "Пожалуйста, выбери язык: ru, en или mix",
         "en": "Please choose a language: ru, en or mix",
     },
+    "fallback_chat": {
+        "ru": "Привет! Чем могу помочь?\n\n📚 /library — библиотека\n🎯 /learn — учить стих\n🔄 /review — повторить",
+        "en": "Hi! How can I help?\n\n📚 /library — browse poems\n🎯 /learn — learn a poem\n🔄 /review — review",
+    },
 
     # Menu
     "menu_library": {
