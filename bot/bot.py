@@ -41,20 +41,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     user = update.effective_user
     if user is None or update.message is None:
         return
-    help_text = (
-        "📖 *Как пользоваться ботом:*\n\n"
-        "🎯 /learn — выучить новый стих\n"
-        "📚 /library — открыть библиотеку\n"
-        "🔄 /review — повторить выученное\n"
-        "📊 /progress — мой прогресс\n"
-        "🔄 /start — начать заново\n\n"
-        "💡 *Во время обучения:*\n"
-        "• /дальше — следующая часть\n"
-        "• /повторить — показать часть снова\n"
-        "• /стоп — остановить обучение\n\n"
-        "🎤 Можешь отправлять голосовые сообщения!"
-    )
-    await update.message.reply_text(help_text, parse_mode="Markdown")
+    data = await call_backend(user.id, "/help")
+    await send_reply(update, context, data)
 
 
 async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

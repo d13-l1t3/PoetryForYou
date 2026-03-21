@@ -372,12 +372,44 @@ def _pick_recommendation(session: Session, user: User, temp_memory) -> Poem:
 
 
 def _score_answer(expected: str, answer: str) -> float:
-    """Score user's answer against expected text."""
-    exp = set(_normalize(expected).split())
-    ans = set(_normalize(answer).split())
-    if not exp:
+    """Score user's answer against expected text.
+    
+    Uses two scoring methods and picks the best:
+    1. Word overlap (bag-of-words) — tolerant of word order changes
+    2. Sequence similarity — rewards correct word order
+    
+    Also normalizes ё→е and strips punctuation for fairer voice comparison.
+    """
+    def _clean(s: str) -> str:
+        # Normalize ё→е (Whisper often transcribes ё as е)
+        s = s.replace('ё', 'е').replace('Ё', 'Е')
+        # Remove all punctuation
+        s = re.sub(r'[^\w\s]', '', s)
+        return _normalize(s)
+    
+    exp_clean = _clean(expected)
+    ans_clean = _clean(answer)
+    
+    if not exp_clean:
         return 0.0
-    return len(exp & ans) / len(exp)
+    
+    exp_words = exp_clean.split()
+    ans_words = ans_clean.split()
+    
+    if not exp_words:
+        return 0.0
+    
+    # Method 1: Word overlap (bag-of-words)
+    exp_set = set(exp_words)
+    ans_set = set(ans_words)
+    overlap_score = len(exp_set & ans_set) / len(exp_set) if exp_set else 0.0
+    
+    # Method 2: Sequence similarity (order-aware)
+    from difflib import SequenceMatcher
+    seq_score = SequenceMatcher(None, exp_clean, ans_clean).ratio()
+    
+    # Return the best of both
+    return max(overlap_score, seq_score)
 
 
 def _update_spaced_repetition(progress: UserPoemProgress, score: float) -> None:
@@ -406,6 +438,132 @@ def _make_library_response(library_result: Dict[str, Any]) -> Tuple[str, List[st
     # Flatten buttons for suggested_replies
     suggested = [btn[0] for btn in buttons if btn] if buttons else []
     return text, suggested, "library"
+
+
+# ────────────────────  GAMIFICATION  ──────────────────── #
+
+def _calc_points(poem_text: str) -> int:
+    """Calculate points for a poem: word_count ÷ 10, minimum 1."""
+    word_count = len(poem_text.split())
+    return max(1, word_count // 10)
+
+
+def _award_points(session: Session, user: User, poem_text: str) -> int:
+    """Award points to user for completing a poem. Returns points earned."""
+    pts = _calc_points(poem_text)
+    user.total_points = (user.total_points or 0) + pts
+    session.add(user)
+    session.commit()
+    return pts
+
+
+def _get_user_rank(session: Session, user_id: int) -> int:
+    """Get user's rank in the leaderboard (1-indexed)."""
+    all_users = session.exec(
+        select(User).where(User.total_points > 0).order_by(User.total_points.desc())
+    ).all()
+    for i, u in enumerate(all_users, 1):
+        if u.id == user_id:
+            return i
+    return len(all_users) + 1
+
+
+def _get_profile_response(session: Session, user: User) -> Tuple[str, List[str], str]:
+    """Build /profile response with points, poems, rank."""
+    lang = user.language_pref
+
+    # Count poems by status
+    progresses = session.exec(
+        select(UserPoemProgress).where(UserPoemProgress.user_id == user.id)
+    ).all()
+    mastered = sum(1 for p in progresses if p.status in ("completed", "mastered"))
+    learning = sum(1 for p in progresses if p.status in ("learning", "paused"))
+    total = len(progresses)
+
+    rank = _get_user_rank(session, user.id)
+    name = user.display_name or f"User #{user.telegram_id}"
+
+    return (
+        t("profile", lang,
+          name=name,
+          points=user.total_points or 0,
+          mastered=mastered,
+          learning=learning,
+          total=total,
+          rank=rank),
+        ["/leaderboard", "/library", "/learn"],
+        "profile"
+    )
+
+
+def _get_leaderboard_response(session: Session, user: User) -> Tuple[str, List[str], str]:
+    """Build /leaderboard response with top 10 users."""
+    lang = user.language_pref
+
+    top_users = session.exec(
+        select(User).where(User.total_points > 0).order_by(User.total_points.desc())
+    ).all()
+
+    if not top_users:
+        return (t("leaderboard_empty", lang), ["/learn", "/library"], "leaderboard")
+
+    rows = []
+    medals = ["🥇", "🥈", "🥉"]
+    for i, u in enumerate(top_users[:10], 1):
+        medal = medals[i - 1] if i <= 3 else f"{i}."
+        name = u.display_name or f"User #{u.telegram_id}"
+        marker = " ← you" if lang == "en" and u.id == user.id else (" ← ты" if u.id == user.id else "")
+        rows.append(f"{medal} *{name}* — {u.total_points} ⭐{marker}")
+
+    return (
+        t("leaderboard", lang, rows="\n".join(rows)),
+        ["/profile", "/library", "/learn"],
+        "leaderboard"
+    )
+
+
+def _get_progress_response(session: Session, user: User, temp_memory) -> Tuple[str, List[str], str]:
+    """Build /progress response showing learning stats."""
+    lang = user.language_pref
+
+    progresses = session.exec(
+        select(UserPoemProgress).where(UserPoemProgress.user_id == user.id)
+    ).all()
+
+    if not progresses:
+        text = "📊 " + ("No progress yet. Start with /learn!" if lang == "en" else "Прогресса пока нет. Начни с /learn!")
+        return (text, ["/learn", "/library"], "progress")
+
+    mastered = [p for p in progresses if p.status in ("completed", "mastered")]
+    learning = [p for p in progresses if p.status in ("learning", "paused")]
+    points = user.total_points or 0
+
+    lines = [
+        "📊 " + ("*My progress:*" if lang == "en" else "*Мой прогресс:*"),
+        "",
+        f"⭐ " + (f"Points: *{points}*" if lang == "en" else f"Очки: *{points}*"),
+        f"✅ " + (f"Mastered: {len(mastered)}" if lang == "en" else f"Выучено: {len(mastered)}"),
+        f"📖 " + (f"In progress: {len(learning)}" if lang == "en" else f"В процессе: {len(learning)}"),
+    ]
+
+    if mastered:
+        lines.append("")
+        lines.append("🏆 " + ("*Mastered:*" if lang == "en" else "*Выученные:*"))
+        for p in mastered[:5]:
+            poem = session.get(Poem, p.poem_id)
+            if poem:
+                lines.append(f"  📜 {poem.title} — {poem.author}")
+
+    if learning:
+        lines.append("")
+        lines.append("📖 " + ("*In progress:*" if lang == "en" else "*В процессе:*"))
+        for p in learning[:5]:
+            poem = session.get(Poem, p.poem_id)
+            if poem:
+                pct = int(len(p.learned_chunks.split(",")) / max(p.total_chunks, 1) * 100) if p.learned_chunks else 0
+                lines.append(f"  📜 {poem.title} — {pct}%")
+
+    return ("\n".join(lines), ["/profile", "/leaderboard", "/library"], "progress")
 
 
 def handle_message(
@@ -589,7 +747,36 @@ def handle_message(
                 buttons("main_menu", user.language_pref),
                 "help"
             )
+        
+        if cmd == "/profile":
+            return _get_profile_response(session, user)
+        
+        if cmd == "/leaderboard":
+            return _get_leaderboard_response(session, user)
+        
+        if cmd == "/setname":
+            user.stage = "setting_name"
+            session.add(user)
+            session.commit()
+            return (
+                t("setname_prompt", user.language_pref),
+                buttons("main_menu", user.language_pref),
+                "setname"
+            )
     
+    # === SETTING NAME STAGE ===
+    if user.stage == "setting_name" and raw and not raw.startswith("/"):
+        name = raw.strip()[:20]
+        user.display_name = name
+        user.stage = "idle"
+        session.add(user)
+        session.commit()
+        return (
+            t("setname_done", user.language_pref, name=name),
+            buttons("main_menu", user.language_pref),
+            "setname"
+        )
+
     # === LIBRARY NAVIGATION ===
     # Check raw text for emoji buttons (not normalized, emojis removed in normalize)
     if user.stage.startswith("library") or raw.startswith(("📝", "🎭", "⭐", "📖", "👤", "📜", "⬅️", "🔍")):
@@ -668,19 +855,18 @@ def handle_message(
             # Repeat current chunk or show hint
             current = active_session.get_current_chunk()
             if current:
+                lang = user.language_pref
                 if user.stage == "testing_chunk":
                     # Show hint during testing
                     return (
-                        f"🔄 Подсказка:\n\n{current}\n\n"
-                        "Попробуй ещё раз:",
-                        ["/подсказка", "/пропустить"],
+                        t("hint", lang, chunk=current),
+                        buttons("testing", lang),
                         "testing"
                     )
                 else:
                     return (
-                        f"🔄 Подсказка:\n\n{current}\n\n"
-                        "Готов продолжить?",
-                        ["/дальше", "/повторить", "/стоп"],
+                        t("hint", lang, chunk=current),
+                        buttons("learning", lang),
                         "learning"
                     )
         
@@ -963,66 +1149,65 @@ def _start_review(session: Session, user: User, temp_memory) -> Tuple[str, List[
 
 def _check_chunk_reproduction(session: Session, user: User, active_session: ActivePoemSession, user_text: str) -> Tuple[str, List[str], str]:
     """Check if user correctly reproduced the current chunk."""
-    # During testing, we test the chunk BEFORE current index (the one being tested)
-    # get_next_chunk() already advanced the index, so the tested chunk is at index - 1
     test_idx = active_session.current_chunk_index - 1
     if test_idx >= 0 and test_idx < len(active_session.chunks):
         current_chunk = active_session.chunks[test_idx]
     else:
         current_chunk = active_session.get_current_chunk()
     if not current_chunk:
-        return ("Ошибка: нет активной части", ["/стоп"], "error")
+        return ("Error", ["/stop"], "error")
     
-    # Score the answer
+    lang = user.language_pref
     score = _score_answer(current_chunk, user_text)
     
-    if score >= 0.8:
+    if score >= 0.7:
         # Good enough! Mark as learned and move to next chunk
         active_session.mark_current_chunk_learned()
         user.stage = "learning_chunk"
         session.add(user)
         session.commit()
         
-        # Check if all chunks are completed
         if active_session.current_chunk_index >= len(active_session.chunks):
             # All chunks completed
             _save_progress_from_session(session, active_session)
             _temp_memory = get_temp_memory()
             _temp_memory.remove_session(user.id)
+            
+            # Award points
+            poem = session.get(Poem, user.active_poem_id)
+            poem_text = _decode_newlines(poem.text) if poem else ""
+            pts = _award_points(session, user, poem_text)
+            
             user.active_poem_id = None
             user.stage = "idle"
             session.add(user)
             session.commit()
             
-            return (
-                f"🎉 Отлично! Совпадение: {score:.0%}\n\n"
-                f"Ты выучил весь стих!\n\n"
-                f"📜 {active_session.poem_title} — {active_session.poem_author}\n\n"
-                "Что дальше?",
-                ["/review", "/library", "/learn"],
-                "completed"
+            msg = (
+                t("score_great", lang, score=f"{score:.0%}") + "\n\n" +
+                t("completed", lang,
+                  title=active_session.poem_title,
+                  author=active_session.poem_author) +
+                t("points_earned", lang, pts=pts, total=user.total_points)
             )
+            return (msg, buttons("after_complete", lang), "completed")
         else:
-            # Move to next chunk
             next_chunk = active_session.get_next_chunk()
             current_idx = active_session.current_chunk_index
             total = len(active_session.chunks)
             
             return (
-                f"🎉 Отлично! Совпадение: {score:.0%}\n\n"
-                f"Следующая часть {current_idx} из {total}:\n\n"
-                f"{next_chunk}\n\n"
-                "Запомни и нажми /дальше",
-                ["/дальше", "/повторить", "/стоп"],
+                t("score_great", lang, score=f"{score:.0%}") + "\n\n" +
+                t("chunk_part", lang, current=current_idx, total=total) + "\n\n" +
+                f"{next_chunk}\n\n" +
+                t("memorize_prompt", lang),
+                buttons("learning", lang),
                 "learning"
             )
     else:
-        # Not good enough, show hint
         return (
-            f"Совпадение: {score:.0%}\n\n"
-            f"🔄 Подсказка:\n\n{current_chunk}\n\n"
-            "Попробуй ещё раз:",
-            ["/подсказка", "/пропустить"],
+            t("score_hint", lang, score=f"{score:.0%}", chunk=current_chunk),
+            buttons("testing", lang),
             "testing"
         )
 
@@ -1059,30 +1244,34 @@ def _check_review_answer(session: Session, user: User, temp_memory, user_answer:
     session.add(user)
     session.commit()
     
-    # Return feedback
+    lang = user.language_pref
+    
     if score >= 0.8:
         return (
-            f"🎉 Отлично! Совпадение: {score:.0%}\n\n"
-            f"📜 {poem.title} — {poem.author}\n\n"
-            f"Прогресс сохранён. Следующий повтор через {progress.interval_days} дн.",
-            ["/review", "/library", "/learn"],
+            t("score_great", lang, score=f"{score:.0%}") + "\n\n" +
+            f"📜 {poem.title} — {poem.author}\n\n" +
+            (f"Next review in {progress.interval_days} days." if lang == "en" else
+             f"Следующий повтор через {progress.interval_days} дн."),
+            buttons("after_complete", lang),
             "review_complete"
         )
     elif score >= 0.5:
         return (
-            f"👍 Неплохо! Совпадение: {score:.0%}\n\n"
-            f"📜 {poem.title} — {poem.author}\n\n"
-            f"Продолжай учить! Попробуй ещё раз через /review",
-            ["/review", "/library", "/learn"],
+            f"👍 {f'Not bad! Match: {score:.0%}' if lang == 'en' else f'Неплохо! Совпадение: {score:.0%}'}\n\n"
+            f"📜 {poem.title} — {poem.author}\n\n" +
+            ("Keep learning! Try again with /review" if lang == "en" else
+             "Продолжай учить! Попробуй ещё раз через /review"),
+            buttons("after_complete", lang),
             "review_partial"
         )
     else:
         return (
-            f"📚 Совпадение: {score:.0%}\n\n"
-            f"Правильный текст:\n\n"
-            f"{expected[:200]}...\n\n"
-            f"Попробуй выучить лучше и повтори через /review",
-            ["/review", "/library", "/learn"],
+            f"📚 {f'Match: {score:.0%}' if lang == 'en' else f'Совпадение: {score:.0%}'}\n\n" +
+            ("Correct text:\n\n" if lang == "en" else "Правильный текст:\n\n") +
+            f"{expected[:200]}...\n\n" +
+            ("Try to memorize better and review with /review" if lang == "en" else
+             "Попробуй выучить лучше и повтори через /review"),
+            buttons("after_complete", lang),
             "review_fail"
         )
 

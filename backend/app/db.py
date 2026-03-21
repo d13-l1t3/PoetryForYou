@@ -21,6 +21,10 @@ class User(SQLModel, table=True):
     stage: str = "onboarding_language"  # onboarding_language|onboarding_level|idle|awaiting_check
     active_poem_id: Optional[int] = Field(default=None, index=True)
 
+    # Gamification
+    display_name: str = ""  # Name shown in leaderboard
+    total_points: int = 0  # Points accumulated from learning poems
+
 
 class Interaction(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

@@ -105,10 +105,84 @@ _STRINGS = {
         "en": "Cancelled. What would you like to do?",
     },
 
-    # Help
+    # Help — BotFather-style full command menu
     "help": {
-        "ru": "📖 Команды:\n\n🎯 /learn — выучить новый стих\n📚 /library — открыть библиотеку\n🔄 /review — повторить выученное\n📊 /progress — мой прогресс\n🔄 /start — начать заново\n\nИли просто напиши мне!",
-        "en": "📖 Commands:\n\n🎯 /learn — learn a new poem\n📚 /library — browse library\n🔄 /review — review learned poems\n📊 /progress — my progress\n🔄 /start — start over\n\nOr just write to me!",
+        "ru": (
+            "📖 *Все команды:*\n\n"
+            "📚 *Обучение:*\n"
+            "/learn — выучить новый стих\n"
+            "/library — открыть библиотеку\n"
+            "/review — повторить выученное\n\n"
+            "📊 *Мой аккаунт:*\n"
+            "/profile — мой профиль и очки\n"
+            "/leaderboard — топ-10 учеников\n"
+            "/progress — прогресс обучения\n"
+            "/setname — установить имя\n\n"
+            "⚙️ *Настройки:*\n"
+            "/start — начать заново\n"
+            "/help — эта справка\n\n"
+            "💡 Можешь отправлять голосовые сообщения!\n"
+            "Или просто напиши что хочешь выучить."
+        ),
+        "en": (
+            "📖 *All commands:*\n\n"
+            "📚 *Learning:*\n"
+            "/learn — learn a new poem\n"
+            "/library — browse the library\n"
+            "/review — review learned poems\n\n"
+            "📊 *My account:*\n"
+            "/profile — my profile & points\n"
+            "/leaderboard — top 10 learners\n"
+            "/progress — learning progress\n"
+            "/setname — set display name\n\n"
+            "⚙️ *Settings:*\n"
+            "/start — start over\n"
+            "/help — this help\n\n"
+            "💡 You can send voice messages!\n"
+            "Or just type what you want to learn."
+        ),
+    },
+
+    # Profile
+    "profile": {
+        "ru": (
+            "👤 *{name}*\n\n"
+            "⭐ Очки: *{points}*\n"
+            "📜 Стихов выучено: {mastered}\n"
+            "📖 В процессе: {learning}\n"
+            "📚 Всего попробовано: {total}\n\n"
+            "🏅 Место в рейтинге: #{rank}"
+        ),
+        "en": (
+            "👤 *{name}*\n\n"
+            "⭐ Points: *{points}*\n"
+            "📜 Poems mastered: {mastered}\n"
+            "📖 In progress: {learning}\n"
+            "📚 Total attempted: {total}\n\n"
+            "🏅 Leaderboard rank: #{rank}"
+        ),
+    },
+
+    "points_earned": {
+        "ru": "\n\n⭐ +{pts} очков! (Всего: {total})",
+        "en": "\n\n⭐ +{pts} points! (Total: {total})",
+    },
+
+    "leaderboard": {
+        "ru": "🏆 *Топ-10 учеников:*\n\n{rows}",
+        "en": "🏆 *Top 10 Learners:*\n\n{rows}",
+    },
+    "leaderboard_empty": {
+        "ru": "🏆 Пока нет учеников. Стань первым — /learn",
+        "en": "🏆 No learners yet. Be the first — /learn",
+    },
+    "setname_prompt": {
+        "ru": "Напиши своё имя для рейтинга (до 20 символов):",
+        "en": "Type your display name for the leaderboard (max 20 chars):",
+    },
+    "setname_done": {
+        "ru": "✅ Имя: *{name}*",
+        "en": "✅ Name set: *{name}*",
     },
 
     # Fallback
