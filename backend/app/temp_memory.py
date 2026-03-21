@@ -45,7 +45,23 @@ class ActivePoemSession:
         """Get current chunk without advancing."""
         if self.current_chunk_index < len(self.chunks):
             return self.chunks[self.current_chunk_index]
+        # Also return the last chunk if we just advanced past it (testing phase)
+        if self.current_chunk_index > 0 and self.current_chunk_index <= len(self.chunks):
+            return self.chunks[self.current_chunk_index - 1]
         return None
+    
+    def peek_chunk(self, index: int) -> Optional[str]:
+        """Get chunk by index without advancing pointer."""
+        if 0 <= index < len(self.chunks):
+            return self.chunks[index]
+        return None
+    
+    def mark_current_chunk_learned(self) -> None:
+        """Mark the current chunk as learned without advancing."""
+        idx = self.current_chunk_index - 1  # We already advanced in get_next_chunk
+        if idx >= 0 and idx not in self.learned_chunks:
+            self.learned_chunks.append(idx)
+        self.touch()
     
     def get_progress(self) -> dict:
         """Get user's learning progress for this poem."""

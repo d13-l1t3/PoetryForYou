@@ -408,8 +408,20 @@ def _score_answer(expected: str, answer: str) -> float:
     from difflib import SequenceMatcher
     seq_score = SequenceMatcher(None, exp_clean, ans_clean).ratio()
     
-    # Return the best of both
-    return max(overlap_score, seq_score)
+    raw_score = max(overlap_score, seq_score)
+    
+    # Length ratio penalty: if user wrote much less than expected,
+    # scale the score down proportionally. This prevents 2-line answers
+    # from getting 90%+ on a 30-line poem.
+    length_ratio = min(1.0, len(ans_words) / max(len(exp_words), 1))
+    if length_ratio < 0.5:
+        # Severe penalty for very short answers
+        raw_score *= length_ratio * 1.5  # e.g. 10% of words → 15% of score
+    elif length_ratio < 0.8:
+        # Moderate penalty
+        raw_score *= (0.5 + length_ratio * 0.5)  # e.g. 60% of words → 80% of score
+    
+    return min(1.0, raw_score)
 
 
 def _update_spaced_repetition(progress: UserPoemProgress, score: float) -> None:
@@ -732,11 +744,51 @@ def handle_message(
         if cmd == "/review":
             return _start_review(session, user, temp_memory)
         
-        if cmd == "/next":
+        if cmd in ("/next", "/дальше", "/следующий", "/продолжить"):
             # Advance to next chunk
             if active_session:
                 return _get_next_chunk_response(session, user, active_session)
-            return ("Нет активного стиха. Начни с /learn", ["/learn"], "help")
+            lang = user.language_pref
+            return (
+                ("No active poem. Start with /learn" if lang == "en" else
+                 "Нет активного стиха. Начни с /learn"),
+                ["/learn", "/library"],
+                "help"
+            )
+        
+        if cmd in ("/повторить", "/repeat", "/подсказка", "/hint"):
+            if active_session:
+                current = active_session.get_current_chunk()
+                if current:
+                    lang = user.language_pref
+                    return (
+                        t("hint", lang, chunk=current),
+                        buttons("learning", lang),
+                        "learning"
+                    )
+            lang = user.language_pref
+            return (
+                ("No active poem. Start with /learn" if lang == "en" else
+                 "Нет активного стиха. Начни с /learn"),
+                ["/learn", "/library"],
+                "help"
+            )
+        
+        if cmd in ("/стоп", "/stop"):
+            if active_session:
+                _save_progress_from_session(session, active_session)
+                temp_memory.remove_session(user.id)
+            user.active_poem_id = None
+            user.stage = "idle"
+            session.add(user)
+            session.commit()
+            lang = user.language_pref
+            return (
+                ("Stopped. What's next?" if lang == "en" else
+                 "Остановлено. Что делаем дальше?"),
+                buttons("main_menu", lang),
+                "paused"
+            )
         
         if cmd == "/progress":
             return _get_progress_response(session, user, temp_memory)
@@ -809,9 +861,9 @@ def handle_message(
     if active_session:
         # Check if user wants to continue with current poem
         if incoming in ("/дальше", "/next", "/следующий", "/продолжить", "/часть"):
-            # Check if user has learned the current chunk
             if user.stage == "learning_chunk":
-                # Move to testing phase for current chunk
+                # Advance: consume current chunk and move to testing
+                active_session.get_next_chunk()  # consume & advance pointer
                 user.stage = "testing_chunk"
                 session.add(user)
                 session.commit()
@@ -821,6 +873,12 @@ def handle_message(
                     buttons("testing", lang),
                     "testing"
                 )
+            elif user.stage == "testing_chunk":
+                # User skips testing, move to next chunk
+                user.stage = "learning_chunk"
+                session.add(user)
+                session.commit()
+                return _get_next_chunk_response(session, user, active_session)
             else:
                 return _get_next_chunk_response(session, user, active_session)
         
@@ -872,6 +930,16 @@ def handle_message(
         
         # Check if user is trying to reproduce the chunk (testing phase)
         if user.stage == "testing_chunk" and raw and not raw.startswith("/"):
+            return _check_chunk_reproduction(session, user, active_session, raw)
+        
+        # AUTO-TEST: If user sends free text/voice during learning phase,
+        # treat it as a reproduction attempt (auto-enter testing)
+        if user.stage == "learning_chunk" and raw and not raw.startswith("/"):
+            # Auto-transition to testing and check reproduction
+            active_session.get_next_chunk()  # consume current chunk
+            user.stage = "testing_chunk"
+            session.add(user)
+            session.commit()
             return _check_chunk_reproduction(session, user, active_session, raw)
     
     # === IDLE INTENTS: NEW POEM SEARCH (check first before resume) ===
@@ -1033,8 +1101,8 @@ def _start_poem_learning(session: Session, user: User, temp_memory) -> Tuple[str
     # Create or update progress record
     _get_or_create_progress(session, user.id, poem.id, len(active_session.chunks))
     
-    # Return first chunk
-    first_chunk = active_session.get_next_chunk()
+    # Return first chunk (peek, don't consume — get_next_chunk advances the pointer)
+    first_chunk = active_session.chunks[0] if active_session.chunks else ""
     total_chunks = len(active_session.chunks)
     
     lang = user.language_pref
@@ -1085,7 +1153,25 @@ def _get_next_chunk_response(session: Session, user: User, active_session: Activ
 
 def _start_review(session: Session, user: User, temp_memory) -> Tuple[str, List[str], str]:
     """Start a review session for due poems or last learned."""
-    # First check for due reviews
+    lang = user.language_pref
+    
+    # PRIORITY 1: If user has an active poem, review that one
+    if user.active_poem_id:
+        poem = session.get(Poem, user.active_poem_id)
+        if poem:
+            user.stage = "reviewing"
+            session.add(user)
+            session.commit()
+            return (
+                f"🔄 " + ("Time to review!" if lang == "en" else "Время повторить!") + f"\n\n"
+                f"📜 {poem.title} — {poem.author}\n\n" +
+                ("Recite the poem from memory (or as much as you remember):" if lang == "en" else
+                 "Вспомни стих и напиши его (или ту часть, что помнишь):"),
+                ["/подсказка", "/не_помню", "/готов"],
+                "review"
+            )
+    
+    # PRIORITY 2: Check for due reviews
     now = datetime.utcnow()
     due_progress = session.exec(
         select(UserPoemProgress)
@@ -1249,11 +1335,20 @@ def _check_review_answer(session: Session, user: User, temp_memory, user_answer:
     lang = user.language_pref
     
     if score >= 0.8:
+        # Award points for successful review
+        poem_text = _decode_newlines(poem.text)
+        pts = _award_points(session, user, poem_text)
+        
+        pts_msg = ""
+        if pts > 0:
+            pts_msg = "\n" + t("points_earned", lang, pts=pts, total=user.total_points)
+        
         return (
             t("score_great", lang, score=f"{score:.0%}") + "\n\n" +
             f"📜 {poem.title} — {poem.author}\n\n" +
             (f"Next review in {progress.interval_days} days." if lang == "en" else
-             f"Следующий повтор через {progress.interval_days} дн."),
+             f"Следующий повтор через {progress.interval_days} дн.") +
+            pts_msg,
             buttons("after_complete", lang),
             "review_complete"
         )
@@ -1415,6 +1510,24 @@ def _handle_library_action(
             ["/library", "/learn", "/review"],
             "menu"
         )
+    
+    if action_type == "paginate":
+        page = action.get("page", 0)
+        # Route pagination based on current library stage
+        if user.stage == "library_authors":
+            result = library.get_authors_list(page)
+        elif user.stage.startswith("library_author_poems:"):
+            author = user.stage.split(":", 1)[1]
+            result = library.get_poems_by_author(author, page)
+        elif user.stage == "library_themes":
+            # Themes aren't paginated currently, show main
+            result = library.get_themes_list()
+        elif user.stage.startswith("library_theme_poems:"):
+            theme = user.stage.split(":", 1)[1]
+            result = library.get_poems_by_theme(theme, page)
+        else:
+            result = library.get_main_menu()
+        return _make_library_response(result)
     
     return _make_library_response(library.get_main_menu())
 
