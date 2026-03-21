@@ -8,7 +8,7 @@ class Settings(BaseSettings):
 
     # OpenRouter LLM
     openrouter_api_key: str = ""
-    llm_model: str = "google/gemini-2.0-flash"
+    llm_model: str = "google/gemini-2.0-flash-001"
 
 
 settings = Settings()

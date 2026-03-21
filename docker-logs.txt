@@ -1,0 +1,279 @@
+db-1  | The files belonging to this database system will be owned by user "postgres".
+db-1  | This user must also own the server process.
+db-1  |
+db-1  | The database cluster will be initialized with locale "en_US.utf8".
+db-1  | The default database encoding has accordingly been set to "UTF8".
+db-1  | The default text search configuration will be set to "english".
+db-1  |
+db-1  | Data page checksums are disabled.
+db-1  |
+db-1  | fixing permissions on existing directory /var/lib/postgresql/data ... ok
+db-1  | creating subdirectories ... ok
+db-1  | selecting dynamic shared memory implementation ... posix
+db-1  | selecting default max_connections ... 100
+db-1  | selecting default shared_buffers ... 128MB
+db-1  | selecting default time zone ... Etc/UTC
+db-1  | creating configuration files ... ok
+db-1  | running bootstrap script ... ok
+db-1  | performing post-bootstrap initialization ... ok
+db-1  | syncing data to disk ... ok
+db-1  |
+db-1  | initdb: warning: enabling "trust" authentication for local connections
+db-1  | initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+db-1  |
+db-1  | Success. You can now start the database server using:
+db-1  |
+db-1  |     pg_ctl -D /var/lib/postgresql/data -l logfile start
+db-1  |
+db-1  | waiting for server to start....2026-03-21 15:36:47.799 UTC [47] LOG:  starting PostgreSQL 16.13 (Debian 16.13-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+db-1  | 2026-03-21 15:36:47.801 UTC [47] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+db-1  | 2026-03-21 15:36:47.807 UTC [50] LOG:  database system was shut down at 2026-03-21 15:36:47 UTC
+db-1  | 2026-03-21 15:36:47.816 UTC [47] LOG:  database system is ready to accept connections
+db-1  |  done
+db-1  | server started
+db-1  | CREATE DATABASE
+db-1  |
+db-1  |
+db-1  | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+db-1  |
+db-1  | waiting for server to shut down....2026-03-21 15:36:48.018 UTC [47] LOG:  received fast shutdown request
+db-1  | 2026-03-21 15:36:48.019 UTC [47] LOG:  aborting any active transactions
+db-1  | 2026-03-21 15:36:48.025 UTC [47] LOG:  background worker "logical replication launcher" (PID 53) exited with exit code 1
+db-1  | 2026-03-21 15:36:48.026 UTC [48] LOG:  shutting down
+db-1  | 2026-03-21 15:36:48.027 UTC [48] LOG:  checkpoint starting: shutdown immediate
+db-1  | 2026-03-21 15:36:48.069 UTC [48] LOG:  checkpoint complete: wrote 926 buffers (5.7%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.021 s, sync=0.019 s, total=0.043 s; sync files=301, longest=0.004 s, average=0.001 s; distance=4273 kB, estimate=4273 kB; lsn=0/191F0E0, redo lsn=0/191F0E0
+db-1  | 2026-03-21 15:36:48.078 UTC [47] LOG:  database system is shut down
+db-1  |  done
+db-1  | server stopped
+db-1  |
+db-1  | PostgreSQL init process complete; ready for start up.
+db-1  |
+db-1  | 2026-03-21 15:36:48.144 UTC [1] LOG:  starting PostgreSQL 16.13 (Debian 16.13-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+db-1  | 2026-03-21 15:36:48.145 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+db-1  | 2026-03-21 15:36:48.145 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+db-1  | 2026-03-21 15:36:48.147 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+db-1  | 2026-03-21 15:36:48.152 UTC [63] LOG:  database system was shut down at 2026-03-21 15:36:48 UTC
+db-1  | 2026-03-21 15:36:48.159 UTC [1] LOG:  database system is ready to accept connections
+bot-1  | Traceback (most recent call last):
+bot-1  |   File "/usr/local/lib/python3.12/site-packages/httpx/_transports/default.py", line 72, in map_httpcore_exceptions
+bot-1  |     yield
+bot-1  |   File "/usr/local/lib/python3.12/site-packages/httpx/_transports/default.py", line 377, in handle_async_request
+bot-1  |     resp = await self._pool.handle_async_request(req)
+bot-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1  |   File "/usr/local/lib/python3.12/site-packages/httpcore/_async/connection_pool.py", line 256, in handle_async_request
+bot-1  |     raise exc from None
+bot-1  |   File "/usr/local/lib/python3.12/site-packages/httpcore/_async/connection_pool.py", line 236, in handle_async_request
+bot-1  |     response = await connection.handle_async_request(
+bot-1  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1  |   File "/usr/local/lib/python3.12/site-packages/httpcore/_async/connection.py", line 103, in handle_async_request
+bot-1  |     return await self._connection.handle_async_request(request)
+bot-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1  |   File "/usr/local/lib/python3.12/site-packages/httpcore/_async/http11.py", line 136, in handle_async_request
+bot-1  |     raise exc
+bot-1  |   File "/usr/local/lib/python3.12/site-packages/httpcore/_async/http11.py", line 106, in handle_async_request
+bot-1  |     ) = await self._receive_response_headers(**kwargs)
+bot-1  |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1  |   File "/usr/local/lib/python3.12/site-packages/httpcore/_async/http11.py", line 177, in _receive_response_headers
+bot-1  |     event = await self._receive_event(timeout=timeout)
+bot-1  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1  |   File "/usr/local/lib/python3.12/site-packages/httpcore/_async/http11.py", line 217, in _receive_event
+bot-1  |     data = await self._network_stream.read(
+bot-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1  |   File "/usr/local/lib/python3.12/site-packages/httpcore/_backends/anyio.py", line 32, in read
+bot-1  |     with map_exceptions(exc_map):
+bot-1  |          ^^^^^^^^^^^^^^^^^^^^^^^
+bot-1  |   File "/usr/local/lib/python3.12/contextlib.py", line 158, in __exit__
+bot-1  |     self.gen.throw(value)
+bot-1  |   File "/usr/local/lib/python3.12/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+bot-1  |     raise to_exc(exc) from exc
+bot-1  | httpcore.ReadTimeout
+bot-1  |
+bot-1  | The above exception was the direct cause of the following exception:
+bot-1  |
+bot-1  | Traceback (most recent call last):
+bot-1  |   File "/usr/local/lib/python3.12/site-packages/telegram/request/_httpxrequest.py", line 292, in do_request
+bot-1  |     res = await self._client.request(
+bot-1  |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1  |   File "/usr/local/lib/python3.12/site-packages/httpx/_client.py", line 1585, in request
+bot-1  |     return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+bot-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1  |   File "/usr/local/lib/python3.12/site-packages/httpx/_client.py", line 1674, in send
+bot-1  |     response = await self._send_handling_auth(
+bot-1  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1  |   File "/usr/local/lib/python3.12/site-packages/httpx/_client.py", line 1702, in _send_handling_auth
+bot-1  |     response = await self._send_handling_redirects(
+bot-1  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1  |   File "/usr/local/lib/python3.12/site-packages/httpx/_client.py", line 1739, in _send_handling_redirects
+bot-1  |     response = await self._send_single_request(request)
+bot-1  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1  |   File "/usr/local/lib/python3.12/site-packages/httpx/_client.py", line 1776, in _send_single_request
+bot-1  |     response = await transport.handle_async_request(request)
+bot-1  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1  |   File "/usr/local/lib/python3.12/site-packages/httpx/_transports/default.py", line 376, in handle_async_request
+bot-1  |     with map_httpcore_exceptions():
+bot-1  |          ^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1  |   File "/usr/local/lib/python3.12/contextlib.py", line 158, in __exit__
+bot-1  |     self.gen.throw(value)
+bot-1  |   File "/usr/local/lib/python3.12/site-packages/httpx/_transports/default.py", line 89, in map_httpcore_exceptions
+bot-1  |     raise mapped_exc(message) from exc
+bot-1  | httpx.ReadTimeout
+bot-1  |
+bot-1  | The above exception was the direct cause of the following exception:
+bot-1  |
+bot-1  | Traceback (most recent call last):
+bot-1  |   File "/app/bot.py", line 139, in <module>
+bot-1  |     main()
+bot-1  |   File "/app/bot.py", line 135, in main
+bot-1  |     app.run_polling(allowed_updates=Update.ALL_TYPES)
+bot-1  |   File "/usr/local/lib/python3.12/site-packages/telegram/ext/_application.py", line 881, in run_polling
+bot-1  |     return self.__run(
+backend-1  | INFO:     Started server process [1]
+backend-1  | INFO:     Waiting for application startup.
+backend-1  | INFO:     Application startup complete.
+backend-1  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+backend-1  | INFO:     172.18.0.4:40116 - "POST /message HTTP/1.1" 200 OK
+backend-1  | INFO:     172.18.0.4:40120 - "POST /message HTTP/1.1" 500 Internal Server Error
+backend-1  | ERROR:    Exception in ASGI application
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/usr/local/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 401, in run_asgi
+backend-1  |     result = await app(  # type: ignore[func-returns-value]
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 70, in __call__
+backend-1  |     return await self.app(scope, receive, send)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__
+backend-1  |     await super().__call__(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.12/site-packages/starlette/applications.py", line 113, in __call__
+backend-1  |     await self.middleware_stack(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 187, in __call__
+backend-1  |     raise exc
+backend-1  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
+backend-1  |     await self.app(scope, receive, _send)
+backend-1  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+backend-1  |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+backend-1  |     raise exc
+backend-1  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+backend-1  |     await app(scope, receive, sender)
+backend-1  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
+backend-1  |     await self.middleware_stack(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
+backend-1  |     await route.handle(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
+backend-1  |     await self.app(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
+backend-1  |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+backend-1  |     raise exc
+backend-1  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+backend-1  |     await app(scope, receive, sender)
+backend-1  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
+backend-1  |     response = await f(request)
+backend-1  |                ^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 301, in app
+backend-1  |     raw_response = await run_endpoint_function(
+backend-1  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 214, in run_endpoint_function
+backend-1  |     return await run_in_threadpool(dependant.call, **values)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.12/site-packages/starlette/concurrency.py", line 39, in run_in_threadpool
+backend-1  |     return await anyio.to_thread.run_sync(func, *args)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.12/site-packages/anyio/to_thread.py", line 63, in run_sync
+backend-1  |     return await get_async_backend().run_sync_in_worker_thread(
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2502, in run_sync_in_worker_thread
+backend-1  |     return await future
+backend-1  |            ^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 986, in run
+backend-1  |     result = context.run(func, *args)
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/app/app/main.py", line 37, in message
+backend-1  |     reply_text, suggested, intent = handle_message(session, payload.telegram_id, payload.text)
+backend-1  |                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/app/app/service_enhanced.py", line 679, in handle_message
+backend-1  |     t("lang_set", lang, lang=lang) + "\n" +
+backend-1  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  | TypeError: t() got multiple values for argument 'lang'
+backend-1  | [DEBUG] Calling LLM classify_intent for: 'ru'
+backend-1  | LLM error: Error code: 400 - {'error': {'message': 'google/gemini-2.0-flash is not a valid model ID', 'code': 400}, 'user_id': 'user_3BFcc0ZGpRM2RZhlYvjKMNFoAaw'}
+backend-1  | [DEBUG] LLM classified ''ru'' as:
+backend-1  | LLM error: Error code: 400 - {'error': {'message': 'google/gemini-2.0-flash is not a valid model ID', 'code': 400}, 'user_id': 'user_3BFcc0ZGpRM2RZhlYvjKMNFoAaw'}
+backend-1  | INFO:     172.18.0.4:48744 - "POST /message HTTP/1.1" 200 OK
+backend-1  | INFO:     172.18.0.4:33608 - "POST /message HTTP/1.1" 200 OK
+backend-1  | INFO:     172.18.0.4:40860 - "POST /message HTTP/1.1" 200 OK
+backend-1  | LLM error: Error code: 400 - {'error': {'message': 'google/gemini-2.0-flash is not a valid model ID', 'code': 400}, 'user_id': 'user_3BFcc0ZGpRM2RZhlYvjKMNFoAaw'}
+backend-1  | INFO:     172.18.0.4:40874 - "POST /message HTTP/1.1" 200 OK
+backend-1  | INFO:     172.18.0.4:40890 - "POST /message HTTP/1.1" 200 OK
+backend-1  | INFO:     172.18.0.4:49328 - "POST /message HTTP/1.1" 200 OK
+backend-1  | INFO:     172.18.0.4:39828 - "POST /message HTTP/1.1" 200 OK
+backend-1  | INFO:     172.18.0.4:38898 - "POST /message HTTP/1.1" 200 OK
+backend-1  | INFO:     172.18.0.4:38902 - "POST /message HTTP/1.1" 200 OK
+backend-1  | INFO:     172.18.0.4:38908 - "POST /message HTTP/1.1" 200 OK
+backend-1  | [DEBUG] Calling LLM classify_intent for: 'я хочу выучить стих маяковского'
+backend-1  | LLM error: Error code: 400 - {'error': {'message': 'google/gemini-2.0-flash is not a valid model ID', 'code': 400}, 'user_id': 'user_3BFcc0ZGpRM2RZhlYvjKMNFoAaw'}
+backend-1  | [DEBUG] LLM classified ''я хочу выучить стих маяковского'' as:
+backend-1  | LLM error: Error code: 400 - {'error': {'message': 'google/gemini-2.0-flash is not a valid model ID', 'code': 400}, 'user_id': 'user_3BFcc0ZGpRM2RZhlYvjKMNFoAaw'}
+backend-1  | INFO:     172.18.0.4:41000 - "POST /message HTTP/1.1" 200 OK
+backend-1  | [DEBUG] Calling LLM classify_intent for: 'привет'
+backend-1  | LLM error: Error code: 400 - {'error': {'message': 'google/gemini-2.0-flash is not a valid model ID', 'code': 400}, 'user_id': 'user_3BFcc0ZGpRM2RZhlYvjKMNFoAaw'}
+backend-1  | [DEBUG] LLM classified ''привет'' as:
+backend-1  | LLM error: Error code: 400 - {'error': {'message': 'google/gemini-2.0-flash is not a valid model ID', 'code': 400}, 'user_id': 'user_3BFcc0ZGpRM2RZhlYvjKMNFoAaw'}
+backend-1  | INFO:     172.18.0.4:58048 - "POST /message HTTP/1.1" 200 OK
+backend-1  | INFO:     172.18.0.4:58052 - "POST /message HTTP/1.1" 200 OK
+backend-1  | INFO:     172.18.0.4:39944 - "POST /message HTTP/1.1" 200 OK
+backend-1  | INFO:     172.18.0.4:59616 - "POST /message HTTP/1.1" 200 OK
+backend-1  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+bot-1      |            ^^^^^^^^^^^
+bot-1      |   File "/usr/local/lib/python3.12/site-packages/telegram/ext/_application.py", line 1079, in __run
+bot-1      |     loop.run_until_complete(self.initialize())
+bot-1      |   File "/usr/local/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+bot-1      |     return future.result()
+bot-1      |            ^^^^^^^^^^^^^^^
+bot-1      |   File "/usr/local/lib/python3.12/site-packages/telegram/ext/_application.py", line 503, in initialize
+bot-1      |     await self.bot.initialize()
+bot-1      |   File "/usr/local/lib/python3.12/site-packages/telegram/ext/_extbot.py", line 301, in initialize
+bot-1      |     await super().initialize()
+bot-1      |   File "/usr/local/lib/python3.12/site-packages/telegram/_bot.py", line 777, in initialize
+bot-1      |     await self.get_me()
+bot-1      |   File "/usr/local/lib/python3.12/site-packages/telegram/ext/_extbot.py", line 1920, in get_me
+bot-1      |     return await super().get_me(
+bot-1      |            ^^^^^^^^^^^^^^^^^^^^^
+bot-1      |   File "/usr/local/lib/python3.12/site-packages/telegram/_bot.py", line 909, in get_me
+bot-1      |     result = await self._post(
+bot-1      |              ^^^^^^^^^^^^^^^^^
+bot-1      |   File "/usr/local/lib/python3.12/site-packages/telegram/_bot.py", line 623, in _post
+bot-1      |     return await self._do_post(
+bot-1      |            ^^^^^^^^^^^^^^^^^^^^
+bot-1      |   File "/usr/local/lib/python3.12/site-packages/telegram/ext/_extbot.py", line 355, in _do_post
+bot-1      |     return await super()._do_post(
+bot-1      |            ^^^^^^^^^^^^^^^^^^^^^^^
+bot-1      |   File "/usr/local/lib/python3.12/site-packages/telegram/_bot.py", line 652, in _do_post
+bot-1      |     result = await request.post(
+bot-1      |              ^^^^^^^^^^^^^^^^^^^
+bot-1      |   File "/usr/local/lib/python3.12/site-packages/telegram/request/_baserequest.py", line 201, in post
+bot-1      |     result = await self._request_wrapper(
+bot-1      |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1      |   File "/usr/local/lib/python3.12/site-packages/telegram/request/_baserequest.py", line 333, in _request_wrapper
+bot-1      |     code, payload = await self.do_request(
+bot-1      |                     ^^^^^^^^^^^^^^^^^^^^^^
+bot-1      |   File "/usr/local/lib/python3.12/site-packages/telegram/request/_httpxrequest.py", line 309, in do_request
+bot-1      |     raise TimedOut from err
+bot-1      | telegram.error.TimedOut: Timed out
+bot-1      | No error handlers are registered, logging exception.
+bot-1      | Traceback (most recent call last):
+bot-1      |   File "/usr/local/lib/python3.12/site-packages/telegram/ext/_application.py", line 1335, in process_update
+bot-1      |     await coroutine
+bot-1      |   File "/usr/local/lib/python3.12/site-packages/telegram/ext/_handlers/basehandler.py", line 158, in handle_update
+bot-1      |     return await self.callback(update, context)
+bot-1      |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1      |   File "/app/bot.py", line 52, in on_text
+bot-1      |     data = await call_backend(user.id, update.message.text)
+bot-1      |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+bot-1      |   File "/app/bot.py", line 18, in call_backend
+bot-1      |     resp.raise_for_status()
+bot-1      |   File "/usr/local/lib/python3.12/site-packages/httpx/_models.py", line 763, in raise_for_status
+bot-1      |     raise HTTPStatusError(message, request=request, response=self)
+bot-1      | httpx.HTTPStatusError: Server error '500 Internal Server Error' for url 'http://backend:8000/message'
+bot-1      | For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500
+backend-1  | INFO:     172.18.0.4:43376 - "POST /voice HTTP/1.1" 200 OK

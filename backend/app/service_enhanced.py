@@ -676,7 +676,7 @@ def handle_message(
             session.commit()
             lang = user.language_pref
             return (
-                t("lang_set", lang, lang=lang) + "\n" +
+                t("lang_set", lang, language=lang.upper()) + "\n" +
                 t("menu_library", lang) + "\n" +
                 t("menu_learn", lang) + "\n" +
                 t("menu_review", lang),
@@ -883,13 +883,15 @@ def handle_message(
     
     # Handle ALL chat intents (greetings, small talk, general questions)
     if inferred == "chat":
-        response = generate_chat_response(text or "")
-        return (response, ["/library", "/learn", "/review"], "chat")
+        lang = user.language_pref
+        response = generate_chat_response(text or "", lang)
+        return (response, buttons("main_menu", lang), "chat")
     
     # Handle help intent with LLM response too
     if inferred == "help":
-        response = generate_chat_response(text or "")
-        return (response, ["/library", "/learn", "/review"], "help")
+        lang = user.language_pref
+        response = generate_chat_response(text or "", lang)
+        return (response, buttons("main_menu", lang), "help")
     
     # If user explicitly wants to learn a specific poem, search for it first
     if inferred and (inferred in ("recommend", "learn", "start") or any(k in incoming for k in ("выуч", "учить", "стих", "поэма"))):

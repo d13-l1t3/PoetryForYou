@@ -13,8 +13,8 @@ _STRINGS = {
         "en": "Hi! I'll help you memorize poems step by step.\n\nChoose your language: ru / en / mix",
     },
     "lang_set": {
-        "ru": "✅ Язык: {lang}\n\nЧто хочешь сделать?",
-        "en": "✅ Language: {lang}\n\nWhat would you like to do?",
+        "ru": "✅ Язык: {language}\n\nЧто хочешь сделать?",
+        "en": "✅ Language: {language}\n\nWhat would you like to do?",
     },
     "choose_lang": {
         "ru": "Пожалуйста, выбери язык: ru, en или mix",

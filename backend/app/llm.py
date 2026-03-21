@@ -4,6 +4,8 @@ import os
 from functools import lru_cache
 from typing import Optional
 
+from app.i18n import t as t_i18n
+
 
 def llm_enabled() -> bool:
     """Check if OpenRouter (or any OpenAI-compatible endpoint) is configured."""
@@ -25,7 +27,7 @@ def _get_llm_response(prompt: str, system_prompt: str = "", max_tokens: int = 10
     if not llm_enabled():
         return ""
 
-    model = os.getenv("LLM_MODEL", "google/gemini-2.0-flash")
+    model = os.getenv("LLM_MODEL", "google/gemini-2.0-flash-001")
 
     try:
         client = _client()
@@ -107,13 +109,20 @@ def classify_intent(text: str) -> str:
         return "help"
     except Exception as e:
         print(f"[DEBUG] LLM classification error: {e}")
+        # Fallback to keyword heuristics on LLM error
+        if any(k in t for k in ("recommend", "new poem", "give me", "хочу стих", "выуч", "стих", "рекоменд", "поэма", "учить", "learn")):
+            return "recommend"
+        if any(k in t for k in ("review", "revise", "repeat", "повтор", "повтори", "провер")):
+            return "review"
+        if any(k in t for k in ("привет", "hello", "hi", "здравств", "добрый", "как дела")):
+            return "chat"
         return "help"
 
 
-def generate_chat_response(text: str) -> str:
+def generate_chat_response(text: str, lang: str = "ru") -> str:
     """Generate a conversational response using LLM."""
     if not llm_enabled():
-        return "Привет! Чем могу помочь?\n\n📚 /library — библиотека\n🎯 /learn — учить стих\n🔄 /review — повторить"
+        return t_i18n("fallback_chat", lang)
 
     try:
         prompt = (

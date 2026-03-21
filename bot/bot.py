@@ -104,11 +104,20 @@ async def send_reply(update: Update, context: ContextTypes.DEFAULT_TYPE, data: d
     if not text:
         text = "🤔 Что-то пошло не так. Попробуй /help"
 
-    if suggested:
-        kb = _build_keyboard(suggested)
-        await update.message.reply_text(text, reply_markup=kb)
-    else:
-        await update.message.reply_text(text)
+    # Try Markdown first, fall back to plain text
+    try:
+        if suggested:
+            kb = _build_keyboard(suggested)
+            await update.message.reply_text(text, reply_markup=kb, parse_mode="Markdown")
+        else:
+            await update.message.reply_text(text, parse_mode="Markdown")
+    except Exception:
+        # Markdown parsing failed — send as plain text
+        if suggested:
+            kb = _build_keyboard(suggested)
+            await update.message.reply_text(text, reply_markup=kb)
+        else:
+            await update.message.reply_text(text)
 
 
 async def on_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
