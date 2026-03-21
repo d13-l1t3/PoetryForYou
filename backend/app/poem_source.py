@@ -668,10 +668,17 @@ class DuckDuckGoPoemSearch:
 class GooglePoemSearch:
     """Fallback search using Google Custom Search API."""
     
+    # Allowed poetry sites (must match the CSE configuration)
+    POETRY_SITES = [
+        'rupoem.ru', 'stihi.ru', 'rustih.ru', 'poetory.ru',
+        'poemata.ru', 'litres.ru', 'culture.ru', 'ilibrary.ru',
+        'poem-english.ru', 'poetryfoundation.org', 'allpoetry.com'
+    ]
+    
     def __init__(self):
         self.api_key = os.getenv("GOOGLE_API_KEY")
-        self.cx = os.getenv("GOOGLE_CX")
-        self.client = httpx.Client(timeout=30.0)
+        self.cx = os.getenv("GOOGLE_CSE_ID") or os.getenv("GOOGLE_CX")
+        self.client = httpx.Client(timeout=30.0, follow_redirects=True)
     
     def is_available(self) -> bool:
         return bool(self.api_key and self.cx)
@@ -714,16 +721,26 @@ class GooglePoemSearch:
         """Try to parse a poem from a search result."""
         try:
             url = item.get('link', '')
-            title = item.get('title', '').replace(' - стихотворение', '').strip()
+            title = item.get('title', '')
+            # Clean title
+            for suffix in [' - стихотворение', ' | Стихи', ' — Русская поэзия', ' - Poetry Foundation']:
+                title = title.replace(suffix, '')
+            title = title.strip()
             snippet = item.get('snippet', '')
             
-            # Skip if not a poem URL
-            if not any(x in url.lower() for x in ['stihi.ru', 'poetory.ru', 'rupoem.ru']):
+            # Accept any URL from our configured CSE sites
+            url_lower = url.lower()
+            if not any(site in url_lower for site in self.POETRY_SITES):
+                print(f"[DEBUG] Google: skipping non-poetry URL: {url}")
                 return None
             
             # Try to fetch the poem
-            return self._fetch_poem_from_url(url, title)
-        except Exception:
+            poem = self._fetch_poem_from_url(url, title)
+            if poem:
+                print(f"[DEBUG] Google: found poem '{poem.title}' by {poem.author}")
+            return poem
+        except Exception as e:
+            print(f"[DEBUG] Google: parse error: {e}")
             return None
     
     def _fetch_poem_from_url(self, url: str, title: str) -> Optional[ExternalPoem]:
@@ -734,15 +751,24 @@ class GooglePoemSearch:
             
             # Try to find author
             author = "Unknown"
-            for selector in ['.author', '.poet', '[class*="author"]', '[class*="poet"]']:
+            for selector in [
+                '.author', '.poet', '.poet-name', '.authorname',
+                '[class*="author"]', '[class*="poet"]',
+                'h2.subtitle', '.poem-author'
+            ]:
                 elem = soup.select_one(selector)
                 if elem:
                     author = elem.get_text(strip=True)
-                    break
+                    if author and len(author) > 2:
+                        break
             
-            # Try to find poem text
+            # Try to find poem text with expanded selectors
             text = ""
-            for selector in ['.poem', '.text', '[class*="poem"]', '[class*="text"]', 'pre']:
+            for selector in [
+                '.poem-text', '.poem-body', '.poem', '.text', '.stih',
+                '[class*="poem"]', '[class*="text"]', '[class*="verse"]',
+                'pre', '.main-text', '.entry-content'
+            ]:
                 elem = soup.select_one(selector)
                 if elem:
                     text = elem.get_text('\n', strip=True)
@@ -752,11 +778,16 @@ class GooglePoemSearch:
             if not text or len(text) < 30:
                 return None
             
+            # Detect language
+            lang = "ru"
+            if 'poetryfoundation.org' in url or 'allpoetry.com' in url:
+                lang = "en"
+            
             return ExternalPoem(
                 title=title,
                 author=author,
                 text=text,
-                language="ru"
+                language=lang
             )
         except Exception:
             return None

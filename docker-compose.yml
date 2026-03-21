@@ -25,6 +25,8 @@ services:
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-google/gemini-2.0-flash}
       WHISPER_MODEL: ${WHISPER_MODEL:-small}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      GOOGLE_CSE_ID: ${GOOGLE_CSE_ID:-}
     depends_on:
       db:
         condition: service_healthy

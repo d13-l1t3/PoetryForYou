@@ -766,11 +766,29 @@ def handle_message(
         if cmd == "/review":
             return _start_review(session, user, temp_memory)
         
+        # Commands that interact with active session or review
         if cmd in ("/next", "/дальше", "/следующий", "/продолжить"):
-            # Only act as fallback when NO active session.
-            # When active session exists, let it fall through to the
-            # active session block which handles learning→testing→next properly.
-            if not active_session:
+            if active_session:
+                if user.stage == "learning_chunk":
+                    # Don't call get_next_chunk() here! The chunk was already
+                    # consumed when it was displayed. Just switch to testing.
+                    user.stage = "testing_chunk"
+                    session.add(user)
+                    session.commit()
+                    lang = user.language_pref
+                    return (
+                        f"👂\n\n{t('test_prompt', lang)}",
+                        buttons("testing", lang),
+                        "testing"
+                    )
+                elif user.stage == "testing_chunk":
+                    user.stage = "learning_chunk"
+                    session.add(user)
+                    session.commit()
+                    return _get_next_chunk_response(session, user, active_session)
+                else:
+                    return _get_next_chunk_response(session, user, active_session)
+            else:
                 lang = user.language_pref
                 return (
                     ("No active poem. Start with /learn" if lang == "en" else
@@ -778,10 +796,39 @@ def handle_message(
                     ["/learn", "/library"],
                     "help"
                 )
-            # Fall through to active session block
         
-        elif cmd in ("/повторить", "/repeat", "/подсказка", "/hint"):
-            if not active_session:
+        if cmd in ("/повторить", "/repeat", "/подсказка", "/hint", "/не_помню", "/забыл", "/не_знаю"):
+            # In review mode — show full poem hint
+            if user.stage == "reviewing" and user.active_poem_id:
+                poem = session.get(Poem, user.active_poem_id)
+                if poem:
+                    lang = user.language_pref
+                    return (
+                        t("review_hint_full", lang,
+                          title=poem.title,
+                          author=poem.author,
+                          preview=_decode_newlines(poem.text)[:200]),
+                        buttons("review", lang),
+                        "review"
+                    )
+            # In active learning session — show current chunk hint
+            if active_session:
+                current = active_session.get_current_chunk()
+                if current:
+                    lang = user.language_pref
+                    if user.stage == "testing_chunk":
+                        return (
+                            t("hint", lang, chunk=current),
+                            buttons("testing", lang),
+                            "testing"
+                        )
+                    else:
+                        return (
+                            t("hint", lang, chunk=current),
+                            buttons("learning", lang),
+                            "learning"
+                        )
+            else:
                 lang = user.language_pref
                 return (
                     ("No active poem. Start with /learn" if lang == "en" else
@@ -789,9 +836,15 @@ def handle_message(
                     ["/learn", "/library"],
                     "help"
                 )
-            # Fall through to active session block
         
-        elif cmd in ("/стоп", "/stop"):
+        if cmd in ("/пропустить", "/skip"):
+            if active_session and user.stage == "testing_chunk":
+                user.stage = "learning_chunk"
+                session.add(user)
+                session.commit()
+                return _get_next_chunk_response(session, user, active_session)
+        
+        if cmd in ("/стоп", "/stop", "/выйти"):
             if active_session:
                 _save_progress_from_session(session, active_session)
                 temp_memory.remove_session(user.id)
@@ -854,98 +907,23 @@ def handle_message(
         
         if action:
             return _handle_library_action(session, user, library, action, temp_memory)
+        
+        # If we're in library stage but action is None (unrecognized input like voice),
+        # reset stage to idle so intent classification can handle it below
+        if user.stage.startswith("library") and raw and not raw.startswith("/"):
+            user.stage = "idle"
+            session.add(user)
+            session.commit()
+            # Fall through to intent classification below
     
     # === REVIEW MODE ===
     if user.stage == "reviewing" and user.active_poem_id:
-        # Check for hint request
-        if incoming in ("/подсказка", "/hint", "/не_помню", "/забыл", "/не_знаю"):
-            poem = session.get(Poem, user.active_poem_id)
-            if poem:
-                lang = user.language_pref
-                return (
-                    t("review_hint_full", lang,
-                      title=poem.title,
-                      author=poem.author,
-                      preview=_decode_newlines(poem.text)[:200]),
-                    buttons("review", lang),
-                    "review"
-                )
-        
-        # Check user's answer
+        # Check user's answer (any non-command text)
         if raw and not raw.startswith("/"):
             return _check_review_answer(session, user, temp_memory, raw)
     
     # === ACTIVE CHUNK LEARNING SESSION ===
     if active_session:
-        # Check if user wants to continue with current poem
-        if incoming in ("/дальше", "/next", "/следующий", "/продолжить", "/часть"):
-            if user.stage == "learning_chunk":
-                # Advance: consume current chunk and move to testing
-                active_session.get_next_chunk()  # consume & advance pointer
-                user.stage = "testing_chunk"
-                session.add(user)
-                session.commit()
-                lang = user.language_pref
-                return (
-                    f"👂\n\n{t('test_prompt', lang)}",
-                    buttons("testing", lang),
-                    "testing"
-                )
-            elif user.stage == "testing_chunk":
-                # User skips testing, move to next chunk
-                user.stage = "learning_chunk"
-                session.add(user)
-                session.commit()
-                return _get_next_chunk_response(session, user, active_session)
-            else:
-                return _get_next_chunk_response(session, user, active_session)
-        
-        # Handle skip command during testing
-        if incoming in ("/пропустить", "/skip") and user.stage == "testing_chunk":
-            # Skip current chunk and move to next
-            user.stage = "learning_chunk"
-            session.add(user)
-            session.commit()
-            return _get_next_chunk_response(session, user, active_session)
-        
-        if incoming in ("/стоп", "/stop", "/хватит", "/закончить", "/выйти"):
-            # Save progress and end session
-            _save_progress_from_session(session, active_session)
-            temp_memory.remove_session(user.id)
-            user.active_poem_id = None
-            user.stage = "idle"
-            session.add(user)
-            session.commit()
-            lang = user.language_pref
-            return (
-                t("stopped", lang,
-                  title=active_session.poem_title,
-                  author=active_session.poem_author,
-                  learned=len(active_session.learned_chunks),
-                  total=len(active_session.chunks)),
-                buttons("main_menu", lang),
-                "paused"
-            )
-        
-        if incoming in ("/повторить", "/repeat", "/ещё_раз", "/подсказка", "/hint", "/не_помню", "/забыл"):
-            # Repeat current chunk or show hint
-            current = active_session.get_current_chunk()
-            if current:
-                lang = user.language_pref
-                if user.stage == "testing_chunk":
-                    # Show hint during testing
-                    return (
-                        t("hint", lang, chunk=current),
-                        buttons("testing", lang),
-                        "testing"
-                    )
-                else:
-                    return (
-                        t("hint", lang, chunk=current),
-                        buttons("learning", lang),
-                        "learning"
-                    )
-        
         # Check if user is trying to reproduce the chunk (testing phase)
         if user.stage == "testing_chunk" and raw and not raw.startswith("/"):
             return _check_chunk_reproduction(session, user, active_session, raw)
@@ -953,8 +931,8 @@ def handle_message(
         # AUTO-TEST: If user sends free text/voice during learning phase,
         # treat it as a reproduction attempt (auto-enter testing)
         if user.stage == "learning_chunk" and raw and not raw.startswith("/"):
-            # Auto-transition to testing and check reproduction
-            active_session.get_next_chunk()  # consume current chunk
+            # Don't call get_next_chunk() — the chunk is already consumed
+            # when it was displayed. Just switch to testing and check.
             user.stage = "testing_chunk"
             session.add(user)
             session.commit()
@@ -1119,8 +1097,8 @@ def _start_poem_learning(session: Session, user: User, temp_memory) -> Tuple[str
     # Create or update progress record
     _get_or_create_progress(session, user.id, poem.id, len(active_session.chunks))
     
-    # Return first chunk (peek, don't consume — get_next_chunk advances the pointer)
-    first_chunk = active_session.chunks[0] if active_session.chunks else ""
+    # Consume first chunk (advances pointer to 1, so get_current_chunk returns chunk 0)
+    first_chunk = active_session.get_next_chunk()
     total_chunks = len(active_session.chunks)
     
     lang = user.language_pref
@@ -1463,7 +1441,8 @@ def _handle_library_action(
         if poem:
             # Start learning this poem
             return _start_specific_poem_learning(session, user, poem, temp_memory)
-        return ("Не нашёл такой стих. Попробуй поиск в /library", ["/library"], "error")
+        lang = user.language_pref
+        return (t("error_poem_missing", lang), ["/library"], "error")
     
     if action_type == "resume_poem":
         query = action.get("poem_query", "")
@@ -1479,29 +1458,52 @@ def _handle_library_action(
                 session.add(user)
                 session.commit()
                 
+                lang = user.language_pref
                 return (
-                    f"📖 Продолжаем!\n\n"
-                    f"📜 {poem.title} — {poem.author}\n"
-                    f"Часть {restored.current_chunk_index + 1} из {len(restored.chunks)}\n\n"
-                    "Готов?",
-                    ["/дальше", "/сначала", "/стоп"],
+                    ("📖 Let's continue!\n\n" if lang == "en" else "📖 Продолжаем!\n\n") +
+                    f"📜 {poem.title} — {poem.author}\n" +
+                    (f"Part {restored.current_chunk_index + 1} of {len(restored.chunks)}\n\n" if lang == "en" else
+                     f"Часть {restored.current_chunk_index + 1} из {len(restored.chunks)}\n\n") +
+                    ("Ready?" if lang == "en" else "Готов?"),
+                    buttons("resume", lang),
                     "learning"
                 )
             # No progress found, start fresh
             return _start_specific_poem_learning(session, user, poem, temp_memory)
-        return ("Не нашёл стих. Попробуй /library", ["/library"], "error")
+        lang = user.language_pref
+        return (t("error_poem_missing", lang), ["/library"], "error")
     
     if action_type == "back":
         user.stage = "idle"
         session.add(user)
         session.commit()
+        lang = user.language_pref
         return (
-            "Главное меню:\n\n"
-            "📚 /library — библиотека\n"
-            "🎯 /learn — учить стих\n"
-            "🔄 /review — повторить",
-            ["/library", "/learn", "/review"],
+            ("Main menu:" if lang == "en" else "Главное меню:") + "\n\n" +
+            t("menu_library", lang) + "\n" +
+            t("menu_learn", lang) + "\n" +
+            t("menu_review", lang),
+            buttons("main_menu", lang),
             "menu"
+        )
+    
+    if action_type == "search":
+        user.stage = "idle"  # Exit library; the user's next message will go to search
+        session.add(user)
+        session.commit()
+        lang = user.language_pref
+        return (
+            ("🔍 Type what you're looking for:\n\n"
+             "• Poem title or first line\n"
+             "• Author name\n"
+             "• Or describe what kind of poem you want"
+             if lang == "en" else
+             "🔍 Напиши, что ищешь:\n\n"
+             "• Название или первую строку стиха\n"
+             "• Имя автора\n"
+             "• Или опиши, какой стих хочешь"),
+            ["/library", "/learn"],
+            "search"
         )
     
     if action_type == "paginate":
@@ -1550,13 +1552,15 @@ def _start_specific_poem_learning(
             
             current_chunk = restored.get_current_chunk()
             if current_chunk:
+                lang = user.language_pref
+                part_num = max(1, restored.current_chunk_index)
                 return (
-                    f"📖 Продолжаем изучение!\n\n"
-                    f"📜 {poem.title} — {poem.author}\n"
-                    f"Часть {restored.current_chunk_index + 1} из {len(restored.chunks)}\n\n"
-                    f"{current_chunk}\n\n"
-                    "Готов продолжить?",
-                    ["/дальше", "/сначала", "/стоп"],
+                    ("📖 Let's continue!\n\n" if lang == "en" else "📖 Продолжаем изучение!\n\n") +
+                    f"📜 {poem.title} — {poem.author}\n" +
+                    t("chunk_part", lang, current=part_num, total=len(restored.chunks)) + "\n\n" +
+                    f"{current_chunk}\n\n" +
+                    ("Ready to continue?" if lang == "en" else "Готов продолжить?"),
+                    buttons("resume", lang),
                     "learning"
                 )
     
@@ -1590,12 +1594,13 @@ def _start_poem_learning_from_poem(
     first_chunk = active_session.get_next_chunk()
     total_chunks = len(active_session.chunks)
     
+    lang = user.language_pref
     return (
         f"📜 {poem.title} — {poem.author}\n\n"
-        f"Часть 1 из {total_chunks}:\n\n"
+        f"{t('chunk_part', lang, current=1, total=total_chunks)}\n\n"
         f"{first_chunk}\n\n"
-        "Запомни и нажми /дальше когда будешь готов",
-        ["/дальше", "/повторить", "/стоп"],
+        f"{t('memorize_prompt', lang)}",
+        buttons("learning", lang),
         "learning"
     )
 
