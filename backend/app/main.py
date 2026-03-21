@@ -59,13 +59,9 @@ async def voice(
         tmp.write(await audio.read())
         tmp_path = tmp.name
 
-    # Look up user's language preference for better STT accuracy
-    with get_session() as session:
-        user = session.exec(select(User).where(User.telegram_id == telegram_id)).first()
-        lang_hint = user.language_pref if user and user.language_pref in ("ru", "en") else None
-
+    # Whisper auto-detects the spoken language — no hint needed
     try:
-        text = transcribe_audio(tmp_path, model_name=model_name, language=lang_hint)
+        text = transcribe_audio(tmp_path, model_name=model_name)
     finally:
         try:
             os.remove(tmp_path)

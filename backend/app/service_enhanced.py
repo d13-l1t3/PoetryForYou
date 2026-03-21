@@ -446,9 +446,9 @@ def _update_spaced_repetition(progress: UserPoemProgress, score: float) -> None:
 def _make_library_response(library_result: Dict[str, Any]) -> Tuple[str, List[str], str]:
     """Convert library service result to response format."""
     text = library_result.get("text", "")
-    buttons = library_result.get("buttons", [])
-    # Flatten buttons for suggested_replies
-    suggested = [btn[0] for btn in buttons if btn] if buttons else []
+    btn_rows = library_result.get("buttons", [])
+    # Flatten ALL buttons from all rows (not just first per row)
+    suggested = [b for row in btn_rows for b in row] if btn_rows else []
     return text, suggested, "library"
 
 
@@ -472,12 +472,16 @@ def _award_points(session: Session, user: User, poem_text: str) -> int:
 def _get_user_rank(session: Session, user_id: int) -> int:
     """Get user's rank in the leaderboard (1-indexed)."""
     all_users = session.exec(
-        select(User).where(User.total_points > 0).order_by(User.total_points.desc())
+        select(User).where(User.total_points >= 0).order_by(User.total_points.desc())
     ).all()
-    for i, u in enumerate(all_users, 1):
+    # Filter to users who have progress records
+    ranked = [u for u in all_users if session.exec(
+        select(UserPoemProgress).where(UserPoemProgress.user_id == u.id)
+    ).first() is not None]
+    for i, u in enumerate(ranked, 1):
         if u.id == user_id:
             return i
-    return len(all_users) + 1
+    return len(ranked) + 1
 
 
 def _get_profile_response(session: Session, user: User) -> Tuple[str, List[str], str]:
@@ -513,8 +517,13 @@ def _get_leaderboard_response(session: Session, user: User) -> Tuple[str, List[s
     lang = user.language_pref
 
     top_users = session.exec(
-        select(User).where(User.total_points > 0).order_by(User.total_points.desc())
+        select(User).where(User.total_points >= 0).order_by(User.total_points.desc())
     ).all()
+    
+    # Filter to users who have actually attempted poems
+    top_users = [u for u in top_users if session.exec(
+        select(UserPoemProgress).where(UserPoemProgress.user_id == u.id)
+    ).first() is not None][:10]
 
     if not top_users:
         return (t("leaderboard_empty", lang), ["/learn", "/library"], "leaderboard")
@@ -615,9 +624,10 @@ def handle_message(
             user.stage = "idle"
             session.add(user)
             session.commit()
+            lang = user.language_pref
             return (
-                "Отменено. Что хочешь сделать?",
-                ["/library", "/learn", "/review"],
+                t("cancelled", lang),
+                buttons("main_menu", lang),
                 "menu"
             )
         
@@ -639,18 +649,28 @@ def handle_message(
                     # Clean up selection data
                     poem_selections.pop(user.telegram_id, None)
                     
-                    # Save external poem to DB
-                    poem = Poem(
-                        language=selected_poem.language,
-                        title=selected_poem.title,
-                        author=selected_poem.author,
-                        text=selected_poem.text,
-                        tags=selected_poem.tags,
-                        difficulty=selected_poem.difficulty
-                    )
-                    session.add(poem)
-                    session.commit()
-                    session.refresh(poem)
+                    # Check if poem already exists in DB (avoid duplicates)
+                    existing = session.exec(
+                        select(Poem).where(
+                            Poem.title == selected_poem.title,
+                            Poem.author == selected_poem.author
+                        )
+                    ).first()
+                    
+                    if existing:
+                        poem = existing
+                    else:
+                        poem = Poem(
+                            language=selected_poem.language,
+                            title=selected_poem.title,
+                            author=selected_poem.author,
+                            text=selected_poem.text,
+                            tags=selected_poem.tags,
+                            difficulty=selected_poem.difficulty
+                        )
+                        session.add(poem)
+                        session.commit()
+                        session.refresh(poem)
                     
                     print(f"[DEBUG] Calling _start_specific_poem_learning")
                     # Start learning this poem
@@ -658,9 +678,10 @@ def handle_message(
                     print(f"[DEBUG] Result stage: {result[2]}")
                     return result
                 else:
+                    lang = user.language_pref
                     return (
-                        f"Неверный номер. Выбери от 1 до {len(options)}",
-                        [str(i+1) for i in range(len(options))] + ["❌ /отмена"],
+                        t("invalid_number", lang, max=len(options)),
+                        [str(i+1) for i in range(len(options))] + ["❌ /отмена" if lang != "en" else "❌ /cancel"],
                         "choosing"
                     )
         except (ValueError, IndexError):
@@ -673,8 +694,9 @@ def handle_message(
             options = selection_data.get("options", [])
             btn_list = [str(i+1) for i in range(len(options))] + ["❌ /отмена"]
             print("[DEBUG] Showing options again")
+            lang = user.language_pref
             return (
-                "Выбери номер стиха из списка выше или нажми ❌ /отмена",
+                t("choose_poem_prompt", lang),
                 btn_list,
                 "choosing"
             )
@@ -719,13 +741,13 @@ def handle_message(
             user.stage = "idle"
             session.add(user)
             session.commit()
+            lang = user.language_pref
             return (
-                f"Язык: {user.language_pref}.\n"
-                "Что хочешь сделать?\n"
-                "📚 /library — библиотека стихов\n"
-                "🎯 /learn — учить новый стих\n"
-                "🔄 /review — повторить",
-                ["/library", "/learn", "/review"],
+                t("lang_changed", lang, language=lang.upper()) + "\n" +
+                t("menu_library", lang) + "\n" +
+                t("menu_learn", lang) + "\n" +
+                t("menu_review", lang),
+                buttons("main_menu", lang),
                 "settings"
             )
         
@@ -745,36 +767,31 @@ def handle_message(
             return _start_review(session, user, temp_memory)
         
         if cmd in ("/next", "/дальше", "/следующий", "/продолжить"):
-            # Advance to next chunk
-            if active_session:
-                return _get_next_chunk_response(session, user, active_session)
-            lang = user.language_pref
-            return (
-                ("No active poem. Start with /learn" if lang == "en" else
-                 "Нет активного стиха. Начни с /learn"),
-                ["/learn", "/library"],
-                "help"
-            )
+            # Only act as fallback when NO active session.
+            # When active session exists, let it fall through to the
+            # active session block which handles learning→testing→next properly.
+            if not active_session:
+                lang = user.language_pref
+                return (
+                    ("No active poem. Start with /learn" if lang == "en" else
+                     "Нет активного стиха. Начни с /learn"),
+                    ["/learn", "/library"],
+                    "help"
+                )
+            # Fall through to active session block
         
-        if cmd in ("/повторить", "/repeat", "/подсказка", "/hint"):
-            if active_session:
-                current = active_session.get_current_chunk()
-                if current:
-                    lang = user.language_pref
-                    return (
-                        t("hint", lang, chunk=current),
-                        buttons("learning", lang),
-                        "learning"
-                    )
-            lang = user.language_pref
-            return (
-                ("No active poem. Start with /learn" if lang == "en" else
-                 "Нет активного стиха. Начни с /learn"),
-                ["/learn", "/library"],
-                "help"
-            )
+        elif cmd in ("/повторить", "/repeat", "/подсказка", "/hint"):
+            if not active_session:
+                lang = user.language_pref
+                return (
+                    ("No active poem. Start with /learn" if lang == "en" else
+                     "Нет активного стиха. Начни с /learn"),
+                    ["/learn", "/library"],
+                    "help"
+                )
+            # Fall through to active session block
         
-        if cmd in ("/стоп", "/stop"):
+        elif cmd in ("/стоп", "/stop"):
             if active_session:
                 _save_progress_from_session(session, active_session)
                 temp_memory.remove_session(user.id)
@@ -844,14 +861,15 @@ def handle_message(
         if incoming in ("/подсказка", "/hint", "/не_помню", "/забыл", "/не_знаю"):
             poem = session.get(Poem, user.active_poem_id)
             if poem:
+                lang = user.language_pref
                 return (
-                f"🔄 Подсказка:\n\n"
-                f"📜 {poem.title} — {poem.author}\n\n"
-                f"{_decode_newlines(poem.text)[:200]}...\n\n"
-                "Попробуй вспомнить и напиши стих:",
-                ["/подсказка", "/не_помню", "/готов"],
-                "review"
-            )
+                    t("review_hint_full", lang,
+                      title=poem.title,
+                      author=poem.author,
+                      preview=_decode_newlines(poem.text)[:200]),
+                    buttons("review", lang),
+                    "review"
+                )
         
         # Check user's answer
         if raw and not raw.startswith("/"):
@@ -992,8 +1010,8 @@ def handle_message(
         search_query = extract_search_keywords(raw)
         print(f"[DEBUG] LLM extracted search keywords: '{search_query}' from '{raw}'")
         
-        # Search for multiple poems on rupoem.ru
-        external_poems = fetch_poems_for_user(search_query, limit=5)
+        # Search for multiple poems across all sources
+        external_poems = fetch_poems_for_user(search_query, limit=10)
         
         if external_poems and len(external_poems) > 0:
             # Store options in temp_memory for user to choose
@@ -1007,10 +1025,11 @@ def handle_message(
             session.commit()
             
             # Build message with options showing first 2 lines of each
-            message_lines = [f"🔍 Нашёл варианты по запросу \"{search_query}\":\n"]
+            lang = user.language_pref
+            message_lines = [t("search_found", lang, query=search_query)]
             btn_list = []
             
-            for i, ext_poem in enumerate(external_poems[:5], 1):
+            for i, ext_poem in enumerate(external_poems[:10], 1):
                 preview = _get_first_lines(ext_poem.text, 2)
                 message_lines.append(
                     f"\n{i}. 📜 {ext_poem.title} — {ext_poem.author}\n"
@@ -1018,8 +1037,8 @@ def handle_message(
                 )
                 btn_list.append(str(i))
             
-            message_lines.append("\n\nВыбери номер стиха, который хочешь выучить:")
-            btn_list.append("❌ /отмена")
+            message_lines.append(t("search_choose", lang))
+            btn_list.append("❌ /cancel" if lang == "en" else "❌ /отмена")
             
             return (
                 "\n".join(message_lines),
@@ -1028,12 +1047,9 @@ def handle_message(
             )
         
         # If external search also found nothing
+        lang = user.language_pref
         return (
-            f"❌ Не нашёл стихи по запросу \"{search_query}\"\n\n"
-            "Попробуй:\n"
-            "• Другие слова из стиха\n"
-            "• Имя автора\n"
-            "• Или выбери из /library",
+            t("search_not_found", lang, query=search_query),
             ["/library", "/learn"],
             "not_found"
         )
@@ -1049,13 +1065,15 @@ def handle_message(
             if restored:
                 progress_info = restored.get_progress()
                 last_text = progress_info.get('last_learned_text', '')
+                lang = user.language_pref
                 return (
-                    f"📖 Продолжаем изучение:\n\n"
-                    f"📜 {poem.title} — {poem.author}\n\n"
-                    f"Ты остановился на части {restored.current_chunk_index + 1} из {len(restored.chunks)}\n"
-                    f"Последнее что ты учил:\n{last_text}...\n\n"
-                    "Продолжим?",
-                    ["/дальше", "/сначала", "/другой"],
+                    t("resume_poem", lang,
+                      title=poem.title,
+                      author=poem.author,
+                      part=restored.current_chunk_index + 1,
+                      total=len(restored.chunks),
+                      last_text=last_text),
+                    buttons("resume", lang),
                     "resume"
                 )
     
@@ -1130,11 +1148,12 @@ def _get_next_chunk_response(session: Session, user: User, active_session: Activ
         session.add(user)
         session.commit()
         
+        lang = user.language_pref
         return (
-            f"🎉 Поздравляю! Ты выучил весь стих!\n\n"
-            f"📜 {active_session.poem_title} — {active_session.poem_author}\n\n"
-            "Что дальше?",
-            ["/review", "/library", "/learn"],
+            t("completed_all", lang,
+              title=active_session.poem_title,
+              author=active_session.poem_author),
+            buttons("after_complete", lang),
             "completed"
         )
     
@@ -1156,20 +1175,27 @@ def _start_review(session: Session, user: User, temp_memory) -> Tuple[str, List[
     lang = user.language_pref
     
     # PRIORITY 1: If user has an active poem, review that one
+    # But skip if the poem was just completed (status=completed and no due_at yet)
     if user.active_poem_id:
-        poem = session.get(Poem, user.active_poem_id)
-        if poem:
-            user.stage = "reviewing"
-            session.add(user)
-            session.commit()
-            return (
-                f"🔄 " + ("Time to review!" if lang == "en" else "Время повторить!") + f"\n\n"
-                f"📜 {poem.title} — {poem.author}\n\n" +
-                ("Recite the poem from memory (or as much as you remember):" if lang == "en" else
-                 "Вспомни стих и напиши его (или ту часть, что помнишь):"),
-                ["/подсказка", "/не_помню", "/готов"],
-                "review"
-            )
+        progress = session.exec(
+            select(UserPoemProgress)
+            .where(UserPoemProgress.user_id == user.id)
+            .where(UserPoemProgress.poem_id == user.active_poem_id)
+        ).first()
+        # Only review if there's progress and it's not freshly completed
+        just_completed = (progress and progress.status in ("completed", "mastered")
+                         and progress.due_at and progress.due_at > datetime.utcnow())
+        if not just_completed:
+            poem = session.get(Poem, user.active_poem_id)
+            if poem:
+                user.stage = "reviewing"
+                session.add(user)
+                session.commit()
+                return (
+                    t("review_time", lang, title=poem.title, author=poem.author),
+                    buttons("review", lang),
+                    "review"
+                )
     
     # PRIORITY 2: Check for due reviews
     now = datetime.utcnow()
@@ -1192,10 +1218,8 @@ def _start_review(session: Session, user: User, temp_memory) -> Tuple[str, List[
             session.commit()
             
             return (
-                f"🔄 Время повторить!\n\n"
-                f"📜 {poem.title} — {poem.author}\n\n"
-                "Вспомни стих и напиши его (или ту часть, что помнишь):",
-                ["/подсказка", "/не_помню", "/готов"],
+                t("review_time", lang, title=poem.title, author=poem.author),
+                buttons("review", lang),
                 "review"
             )
     
@@ -1216,20 +1240,22 @@ def _start_review(session: Session, user: User, temp_memory) -> Tuple[str, List[
         session.add(user)
         session.commit()
         
+        last_text = progress.last_session_text[:150] if progress.last_session_text else "..."
         return (
-            f"📖 Продолжим обучение!\n\n"
-            f"📜 {poem.title} — {poem.author}\n"
-            f"Остановился на части {restored.current_chunk_index + 1} из {len(restored.chunks)}\n\n"
-            f"Последнее что учил:\n{progress.last_session_text[:150]}...\n\n"
-            "Продолжим?",
-            ["/дальше", "/сначала", "/стоп"],
+            ("📖 Let's continue!\n\n" if lang == "en" else "📖 Продолжим обучение!\n\n") +
+            f"📜 {poem.title} — {poem.author}\n" +
+            (f"Stopped at part {restored.current_chunk_index + 1} of {len(restored.chunks)}\n\n" if lang == "en" else
+             f"Остановился на части {restored.current_chunk_index + 1} из {len(restored.chunks)}\n\n") +
+            (f"Last learned:\n{last_text}...\n\n" if lang == "en" else
+             f"Последнее что учил:\n{last_text}...\n\n") +
+            ("Continue?" if lang == "en" else "Продолжим?"),
+            buttons("resume", lang),
             "learning"
         )
     
     # Nothing to review
     return (
-        "У тебя нет стихов для повторения.\n\n"
-        "Начни учить новый!",
+        t("no_review", lang),
         ["/library", "/learn"],
         "help"
     )
@@ -1303,7 +1329,7 @@ def _check_chunk_reproduction(session: Session, user: User, active_session: Acti
 def _check_review_answer(session: Session, user: User, temp_memory, user_answer: str) -> Tuple[str, List[str], str]:
     """Check user's answer during review and update progress."""
     if not user.active_poem_id:
-        return ("Ошибка: нет активного стиха", ["/library"], "error")
+        return (t("error_no_poem", user.language_pref), ["/library"], "error")
     
     poem = session.get(Poem, user.active_poem_id)
     if not poem:
@@ -1311,7 +1337,7 @@ def _check_review_answer(session: Session, user: User, temp_memory, user_answer:
         user.stage = "idle"
         session.add(user)
         session.commit()
-        return ("Стих не найден. Начни с /library", ["/library"], "error")
+        return (t("error_poem_missing", user.language_pref), ["/library"], "error")
     
     # Score the answer
     expected = _decode_newlines(poem.text)
@@ -1372,39 +1398,6 @@ def _check_review_answer(session: Session, user: User, temp_memory, user_answer:
             "review_fail"
         )
 
-
-def _get_progress_response(session: Session, user: User, temp_memory) -> Tuple[str, List[str], str]:
-    """Get user's learning progress summary."""
-    # Active session
-    active = get_temp_memory().get_session(user.id)
-    active_text = ""
-    if active:
-        progress = active.get_progress()
-        active_text = (
-            f"📖 Сейчас учишь:\n"
-            f"📜 {progress['title']} — {progress['author']}\n"
-            f"Прогресс: {progress['progress_percent']}%\n\n"
-        )
-    
-    # Stats from DB
-    all_progress = session.exec(
-        select(UserPoemProgress).where(UserPoemProgress.user_id == user.id)
-    ).all()
-    
-    learning = sum(1 for p in all_progress if p.status == "learning")
-    paused = sum(1 for p in all_progress if p.status == "paused")
-    completed = sum(1 for p in all_progress if p.status in ("completed", "mastered"))
-    
-    return (
-        f"📊 Твоя статистика:\n\n"
-        f"{active_text}"
-        f"✅ Завершено: {completed}\n"
-        f"🔄 В процессе: {learning + paused}\n"
-        f"🏆 Освоено: {sum(1 for p in all_progress if p.status == 'mastered')}\n\n"
-        "Что делаем дальше?",
-        ["/library", "/learn", "/review"],
-        "progress"
-    )
 
 
 def _handle_library_action(

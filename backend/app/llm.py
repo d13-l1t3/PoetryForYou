@@ -125,27 +125,34 @@ def generate_chat_response(text: str, lang: str = "ru") -> str:
         return t_i18n("fallback_chat", lang)
 
     try:
-        prompt = (
-            "Ты - дружелюбный помощник для изучения стихов. "
-            "Ответь на сообщение пользователя кратко и дружелюбно. "
-            "Можешь спросить, хочет ли он учить стихи или что-то еще.\n\n"
-            f"Сообщение: {text}\n\n"
-            "Ответ:"
-        )
+        if lang == "en":
+            prompt = (
+                "You are a friendly poetry learning assistant. "
+                "Reply to the user's message briefly and warmly. "
+                "You can ask if they want to learn poems or something else.\n\n"
+                f"Message: {text}\n\n"
+                "Reply:"
+            )
+            system = "You are a friendly assistant. Reply briefly (1-2 sentences) and politely. Answer in English."
+        else:
+            prompt = (
+                "Ты - дружелюбный помощник для изучения стихов. "
+                "Ответь на сообщение пользователя кратко и дружелюбно. "
+                "Можешь спросить, хочет ли он учить стихи или что-то еще.\n\n"
+                f"Сообщение: {text}\n\n"
+                "Ответ:"
+            )
+            system = "Ты - дружелюбный помощник. Отвечай кратко (1-2 предложения) и вежливо."
 
-        response = _get_llm_response(
-            prompt,
-            system_prompt="Ты - дружелюбный помощник. Отвечай кратко (1-2 предложения) и вежливо.",
-            max_tokens=100
-        )
+        response = _get_llm_response(prompt, system_prompt=system, max_tokens=100)
 
         if not response:
-            return "Привет! Чем могу помочь?\n\n📚 /library — библиотека\n🎯 /learn — учить стих\n🔄 /review — повторить"
+            return t_i18n("fallback_chat", lang)
 
         return response
     except Exception as e:
         print(f"[DEBUG] Chat response error: {e}")
-        return "Привет! Чем могу помочь?\n\n📚 /library — библиотека\n🎯 /learn — учить стих\n🔄 /review — повторить"
+        return t_i18n("fallback_chat", lang)
 
 
 def generate_poem_explanation(poem_title: str, poem_author: str, poem_text: str, language: str = "ru") -> str:

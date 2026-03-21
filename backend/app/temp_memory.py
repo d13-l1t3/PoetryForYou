@@ -35,19 +35,24 @@ class ActivePoemSession:
         """Get the next chunk of the poem for learning."""
         if self.current_chunk_index < len(self.chunks):
             chunk = self.chunks[self.current_chunk_index]
-            self.learned_chunks.append(self.current_chunk_index)
+            if self.current_chunk_index not in self.learned_chunks:
+                self.learned_chunks.append(self.current_chunk_index)
             self.current_chunk_index += 1
             self.touch()
             return chunk
         return None
     
     def get_current_chunk(self) -> Optional[str]:
-        """Get current chunk without advancing."""
-        if self.current_chunk_index < len(self.chunks):
-            return self.chunks[self.current_chunk_index]
-        # Also return the last chunk if we just advanced past it (testing phase)
+        """Get the chunk currently being studied (the last one shown to user).
+        
+        After get_next_chunk() advances the index, the 'current' chunk
+        being studied is chunks[index - 1]. At index=0 (initial state,
+        before any get_next_chunk call), we return chunks[0].
+        """
         if self.current_chunk_index > 0 and self.current_chunk_index <= len(self.chunks):
             return self.chunks[self.current_chunk_index - 1]
+        if self.current_chunk_index == 0 and len(self.chunks) > 0:
+            return self.chunks[0]
         return None
     
     def peek_chunk(self, index: int) -> Optional[str]:

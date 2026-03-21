@@ -33,10 +33,8 @@ def transcribe_audio(
     """
     model = _load_model(model_name)
     
-    # Pass language hint if available — improves accuracy for known languages
-    transcribe_kwargs = {"beam_size": 5}
-    if language and language in ("ru", "en"):
-        transcribe_kwargs["language"] = language
-    
-    segments, _info = model.transcribe(file_path, **transcribe_kwargs)
+    # Let Whisper auto-detect the spoken language.
+    # Don't force language from UI preference — user may speak Russian
+    # even when UI is set to English.
+    segments, _info = model.transcribe(file_path, beam_size=5)
     return " ".join(seg.text.strip() for seg in segments).strip()

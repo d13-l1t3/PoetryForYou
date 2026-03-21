@@ -964,7 +964,8 @@ def get_hardcoded_poems() -> HardcodedPoems:
 
 def fetch_poems_for_user(query: Optional[str] = None, limit: int = 5) -> List[ExternalPoem]:
     """
-    Fetch multiple poems for a user. Tries multiple sources.
+    Fetch multiple poems for a user. Combines results from multiple sources
+    and deduplicates by title+author.
     """
     if not query:
         # Return random poems
@@ -976,59 +977,92 @@ def fetch_poems_for_user(query: Optional[str] = None, limit: int = 5) -> List[Ex
                 poems.append(poem)
         return poems
     
-    # Try hardcoded poems first (guaranteed to work)
+    all_poems: List[ExternalPoem] = []
+    seen: set = set()  # (normalized_title, normalized_author) for dedup
+    
+    def _add_poems(new_poems: List[ExternalPoem]) -> None:
+        """Add poems to result list, skipping duplicates."""
+        for p in new_poems:
+            key = (p.title.lower().strip(), p.author.lower().strip())
+            if key not in seen:
+                seen.add(key)
+                all_poems.append(p)
+    
+    # 1. Hardcoded poems (instant, guaranteed)
     print(f"[DEBUG] Searching hardcoded poems for: {query}")
     hardcoded = get_hardcoded_poems()
-    poems = hardcoded.search_poems(query, limit=limit)
+    _add_poems(hardcoded.search_poems(query, limit=limit))
+    if all_poems:
+        print(f"[DEBUG] Found {len(all_poems)} poems in hardcoded collection")
     
-    if poems:
-        print(f"[DEBUG] Found {len(poems)} poems in hardcoded collection")
-        return poems
+    # 2. If we already have enough, return early
+    if len(all_poems) >= limit:
+        return all_poems[:limit]
     
-    # Try StihiRu second
-    print(f"[DEBUG] Searching stihi.ru for: {query}")
-    stihi = get_stihi_search()
-    poems = stihi.search_poems(query, limit=limit)
+    # 3. Try online sources to fill remaining slots
+    remaining = limit - len(all_poems)
     
-    if poems:
-        print(f"[DEBUG] Found {len(poems)} poems on stihi.ru")
-        return poems
+    # stihi.ru
+    try:
+        print(f"[DEBUG] Searching stihi.ru for: {query}")
+        stihi = get_stihi_search()
+        _add_poems(stihi.search_poems(query, limit=remaining))
+    except Exception as e:
+        print(f"[DEBUG] stihi.ru error: {e}")
     
-    # Try litera.ru third for classical poetry
-    print(f"[DEBUG] Searching litera.ru for: {query}")
-    litera = get_litera_search()
-    poems = litera.search_poems(query, limit=limit)
+    if len(all_poems) >= limit:
+        return all_poems[:limit]
+    remaining = limit - len(all_poems)
     
-    if poems:
-        print(f"[DEBUG] Found {len(poems)} poems on litera.ru")
-        return poems
+    # litera.ru
+    try:
+        print(f"[DEBUG] Searching litera.ru for: {query}")
+        litera = get_litera_search()
+        _add_poems(litera.search_poems(query, limit=remaining))
+    except Exception as e:
+        print(f"[DEBUG] litera.ru error: {e}")
     
-    # Try rupoem.ru fourth
-    print(f"[DEBUG] Searching rupoem.ru for: {query}")
-    client = get_rupoem_client()
-    poems = client.search_poems(query, limit=limit)
+    if len(all_poems) >= limit:
+        return all_poems[:limit]
+    remaining = limit - len(all_poems)
     
-    if poems:
-        print(f"[DEBUG] Found {len(poems)} poems on rupoem.ru")
-        return poems
+    # rupoem.ru
+    try:
+        print(f"[DEBUG] Searching rupoem.ru for: {query}")
+        client = get_rupoem_client()
+        _add_poems(client.search_poems(query, limit=remaining))
+    except Exception as e:
+        print(f"[DEBUG] rupoem.ru error: {e}")
     
-    # Try DuckDuckGo search (no API key needed)
-    print(f"[DEBUG] Trying DuckDuckGo search for: {query}")
-    ddg = get_duckduckgo_search()
-    if ddg.is_available():
-        poems = ddg.search_poems(query, limit=limit)
-        if poems:
-            print(f"[DEBUG] Found {len(poems)} poems via DuckDuckGo")
-            return poems
+    if len(all_poems) >= limit:
+        return all_poems[:limit]
+    remaining = limit - len(all_poems)
     
-    # Try Google search as last fallback (requires API key)
-    print(f"[DEBUG] Trying Google search for: {query}")
-    google = get_google_search()
-    if google.is_available():
-        poems = google.search_poems(query, limit=limit)
-        if poems:
-            print(f"[DEBUG] Found {len(poems)} poems via Google")
-            return poems
+    # DuckDuckGo (no API key needed)
+    try:
+        print(f"[DEBUG] Trying DuckDuckGo search for: {query}")
+        ddg = get_duckduckgo_search()
+        if ddg.is_available():
+            _add_poems(ddg.search_poems(query, limit=remaining))
+    except Exception as e:
+        print(f"[DEBUG] DuckDuckGo error: {e}")
     
-    print(f"[DEBUG] No poems found for: {query}")
-    return []
+    if len(all_poems) >= limit:
+        return all_poems[:limit]
+    remaining = limit - len(all_poems)
+    
+    # Google (requires API key)
+    try:
+        print(f"[DEBUG] Trying Google search for: {query}")
+        google = get_google_search()
+        if google.is_available():
+            _add_poems(google.search_poems(query, limit=remaining))
+    except Exception as e:
+        print(f"[DEBUG] Google error: {e}")
+    
+    if not all_poems:
+        print(f"[DEBUG] No poems found for: {query}")
+    else:
+        print(f"[DEBUG] Total poems found: {len(all_poems)}")
+    
+    return all_poems[:limit]

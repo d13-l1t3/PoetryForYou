@@ -29,6 +29,34 @@ async def call_backend_voice(telegram_id: int, filename: str, audio_bytes: bytes
         return resp.json()
 
 
+# ───────── Status message helpers ───────── #
+
+async def _send_status(update: Update, text: str) -> int | None:
+    """Send a temporary status message. Returns the message ID for later deletion."""
+    if update.message is None:
+        return None
+    try:
+        msg = await update.message.reply_text(text)
+        return msg.message_id
+    except Exception:
+        return None
+
+
+async def _delete_status(update: Update, context: ContextTypes.DEFAULT_TYPE, msg_id: int | None) -> None:
+    """Delete a previously sent status message."""
+    if msg_id is None or update.effective_chat is None:
+        return
+    try:
+        await context.bot.delete_message(
+            chat_id=update.effective_chat.id,
+            message_id=msg_id,
+        )
+    except Exception:
+        pass  # Message may have already been deleted or is too old
+
+
+# ───────── Handlers ───────── #
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
     if user is None or update.message is None:
@@ -49,18 +77,44 @@ async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
     if user is None or update.message is None or update.message.text is None:
         return
-    data = await call_backend(user.id, update.message.text)
+
+    text = update.message.text
+
+    # Show status for text that might take time (search, LLM queries)
+    status_id = None
+    if not text.startswith("/") or text.startswith(("/learn", "/review", "/library")):
+        status_id = await _send_status(update, "💭 Думаю...")
+
+    try:
+        data = await call_backend(user.id, text)
+    finally:
+        await _delete_status(update, context, status_id)
+
     await send_reply(update, context, data)
+
 
 async def on_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
     if user is None or update.message is None or update.message.voice is None:
         return
 
+    # Step 1: Show "Listening..."
+    status_id = await _send_status(update, "🎧 Слушаю...")
+
     voice = update.message.voice
     tg_file = await context.bot.get_file(voice.file_id)
     audio_bytes = await tg_file.download_as_bytearray()
-    data = await call_backend_voice(user.id, "voice.ogg", bytes(audio_bytes))
+
+    # Step 2: Update to "Recognizing..."
+    await _delete_status(update, context, status_id)
+    status_id = await _send_status(update, "🔍 Распознаю речь...")
+
+    try:
+        data = await call_backend_voice(user.id, "voice.ogg", bytes(audio_bytes))
+    finally:
+        # Step 3: Clean up status before sending real reply
+        await _delete_status(update, context, status_id)
+
     await send_reply(update, context, data)
 
 
@@ -125,7 +179,19 @@ async def on_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     user = update.effective_user
     if user is None or update.message is None or update.message.text is None:
         return
-    data = await call_backend(user.id, update.message.text)
+
+    text = update.message.text
+
+    # Show status for commands that may take time
+    status_id = None
+    if text.startswith(("/learn", "/review", "/library", "/leaderboard", "/progress", "/profile")):
+        status_id = await _send_status(update, "⏳ Загружаю...")
+
+    try:
+        data = await call_backend(user.id, text)
+    finally:
+        await _delete_status(update, context, status_id)
+
     await send_reply(update, context, data)
 
 

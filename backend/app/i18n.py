@@ -189,6 +189,64 @@ _STRINGS = {
         "en": "✅ Name set: *{name}*",
     },
 
+    # Choosing poem
+    "invalid_number": {
+        "ru": "Неверный номер. Выбери от 1 до {max}",
+        "en": "Invalid number. Choose from 1 to {max}",
+    },
+    "choose_poem_prompt": {
+        "ru": "Выбери номер стиха из списка выше или нажми ❌ /отмена",
+        "en": "Choose a poem number from the list above or press ❌ /cancel",
+    },
+
+    # Search
+    "search_found": {
+        "ru": "🔍 Нашёл варианты по запросу \"{query}\":\n",
+        "en": "🔍 Found results for \"{query}\":\n",
+    },
+    "search_choose": {
+        "ru": "\n\nВыбери номер стиха, который хочешь выучить:",
+        "en": "\n\nChoose a poem number to learn:",
+    },
+    "search_not_found": {
+        "ru": "❌ Не нашёл стихи по запросу \"{query}\"\n\nПопробуй:\n• Другие слова из стиха\n• Имя автора\n• Или выбери из /library",
+        "en": "❌ No poems found for \"{query}\"\n\nTry:\n• Different words from the poem\n• Author name\n• Or browse /library",
+    },
+
+    # Completed all chunks
+    "completed_all": {
+        "ru": "🎉 Поздравляю! Ты выучил весь стих!\n\n📜 {title} — {author}\n\nЧто дальше?",
+        "en": "🎉 Congratulations! You've memorized the whole poem!\n\n📜 {title} — {author}\n\nWhat next?",
+    },
+
+    # Resume
+    "resume_poem": {
+        "ru": "📖 Продолжаем изучение:\n\n📜 {title} — {author}\n\nТы остановился на части {part} из {total}\nПоследнее что ты учил:\n{last_text}...\n\nПродолжим?",
+        "en": "📖 Continuing:\n\n📜 {title} — {author}\n\nYou stopped at part {part} of {total}\nLast learned:\n{last_text}...\n\nContinue?",
+    },
+
+    # Review hint (full poem)
+    "review_hint_full": {
+        "ru": "🔄 Подсказка:\n\n📜 {title} — {author}\n\n{preview}...\n\nПопробуй вспомнить и напиши стих:",
+        "en": "🔄 Hint:\n\n📜 {title} — {author}\n\n{preview}...\n\nTry to remember and write the poem:",
+    },
+
+    # Errors
+    "error_no_poem": {
+        "ru": "Ошибка: нет активного стиха",
+        "en": "Error: no active poem",
+    },
+    "error_poem_missing": {
+        "ru": "Стих не найден. Начни с /library",
+        "en": "Poem not found. Start with /library",
+    },
+
+    # Lang command
+    "lang_changed": {
+        "ru": "Язык: {language}.\nЧто хочешь сделать?",
+        "en": "Language: {language}.\nWhat would you like to do?",
+    },
+
     # Fallback
     "fallback_chat": {
         "ru": "Привет! Чем могу помочь?\n\n📚 /library — библиотека\n🎯 /learn — учить стих\n🔄 /review — повторить",
