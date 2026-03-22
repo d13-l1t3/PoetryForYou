@@ -14,7 +14,12 @@ from app.service_enhanced import handle_message, log_interaction, cleanup_expire
 from app.stt import transcribe_audio
 
 
-app = FastAPI(title="Poetry Conversational Recommender")
+app = FastAPI(
+    title="Poetry Conversational Recommender",
+    docs_url=None,       # disable Swagger UI in production
+    redoc_url=None,      # disable ReDoc in production
+    openapi_url=None,    # disable openapi.json schema exposure
+)
 
 
 @app.on_event("startup")
@@ -55,8 +60,12 @@ async def voice(
 ) -> MessageResponse:
     model_name = os.getenv("WHISPER_MODEL", "small")
 
+    contents = await audio.read()
+    if len(contents) > 10 * 1024 * 1024:  # 10 MB limit
+        raise HTTPException(status_code=413, detail="Audio file too large (max 10 MB)")
+
     with tempfile.NamedTemporaryFile(delete=False, suffix=".ogg") as tmp:
-        tmp.write(await audio.read())
+        tmp.write(contents)
         tmp_path = tmp.name
 
     # Whisper auto-detects the spoken language — no hint needed

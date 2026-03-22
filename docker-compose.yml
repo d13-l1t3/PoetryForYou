@@ -1,7 +1,9 @@
 services:
   db:
-    image: postgres:16
+    image: postgres:16.8
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -20,6 +22,11 @@ services:
     build:
       context: ./backend
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp  # needed for voice file upload temp storage
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
@@ -37,6 +44,9 @@ services:
     build:
       context: ./bot
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
     environment:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       BACKEND_BASE_URL: ${BACKEND_BASE_URL:-http://backend:8000}

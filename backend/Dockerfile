@@ -15,6 +15,10 @@ RUN pip install --no-cache-dir -r /app/requirements.txt -r /app/requirements-aud
 COPY app /app/app
 COPY data /app/data
 
+# Security: run as non-root user
+RUN useradd --create-home appuser
+USER appuser
+
 ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000
