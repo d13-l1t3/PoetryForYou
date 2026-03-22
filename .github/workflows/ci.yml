@@ -25,7 +25,7 @@ jobs:
           pip install pytest pytest-cov ruff bandit
 
       - name: Lint with ruff
-        run: ruff check backend/ --output-format=text
+        run: ruff check backend/ --output-format=github
 
       - name: Security scan with bandit
         run: bandit -r backend/app/ -ll --format txt || true
