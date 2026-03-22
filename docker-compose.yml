@@ -31,7 +31,7 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
-      LLM_MODEL: ${LLM_MODEL:-google/gemini-2.0-flash}
+      LLM_MODEL: ${LLM_MODEL:-google/gemini-2.0-flash-001}
       WHISPER_MODEL: ${WHISPER_MODEL:-small}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
       GOOGLE_CSE_ID: ${GOOGLE_CSE_ID:-}
