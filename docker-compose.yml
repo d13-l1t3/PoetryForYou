@@ -27,6 +27,7 @@ services:
     read_only: true
     tmpfs:
       - /tmp  # needed for voice file upload temp storage
+      - /home/appuser/.cache  # needed for Whisper model download
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
