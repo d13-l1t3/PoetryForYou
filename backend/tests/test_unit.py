@@ -2,7 +2,7 @@
 Unit tests for PoetryForYou backend.
 Tests core functions: normalization, scoring, spaced repetition, i18n, points.
 """
-import pytest
+import pytest  # noqa: F401
 import sys
 import os
 

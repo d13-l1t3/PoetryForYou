@@ -3,7 +3,6 @@ Enhanced poem learning service with temporary memory and chunk-based learning.
 """
 from __future__ import annotations
 
-import os
 import re
 import random
 from datetime import datetime, timedelta, timezone
@@ -11,7 +10,7 @@ from typing import Optional, List, Dict, Any, Tuple
 
 from sqlmodel import Session, select
 
-from app.db import Interaction, LearningItem, Poem, User, UserPoemProgress, UserPreferences
+from app.db import Interaction, Poem, User, UserPoemProgress, UserPreferences
 from app.temp_memory import get_temp_memory, ActivePoemSession
 from app.library_service import get_library_service
 from app.llm import classify_intent, extract_search_keywords, generate_chat_response
@@ -51,7 +50,7 @@ def _decode_newlines(s: str) -> str:
 def _get_first_lines(text: str, lines_count: int = 2) -> str:
     """Get first N lines of poem text for preview."""
     decoded = _decode_newlines(text)
-    lines = [l.strip() for l in decoded.split('\n') if l.strip()]
+    lines = [line.strip() for line in decoded.split('\n') if line.strip()]
     return ' / '.join(lines[:lines_count]) if lines else "..."
 
 
@@ -134,7 +133,7 @@ def _find_poem_by_query(session: Session, query: str, lang_pref: str) -> Optiona
         return best_poem
 
     # Last resort: try external source if not found locally
-    print(f"[DEBUG] No local match found, trying external source (rupoem.ru)")
+    print("[DEBUG] No local match found, trying external source (rupoem.ru)")
     try:
         external_poems = fetch_poems_for_user(query, limit=1)
         external_poem = external_poems[0] if external_poems else None
@@ -153,7 +152,7 @@ def _find_poem_by_query(session: Session, query: str, lang_pref: str) -> Optiona
             session.refresh(poem)
             return poem
         else:
-            print(f"[DEBUG] External source returned no results")
+            print("[DEBUG] External source returned no results")
     except Exception as e:
         print(f"[DEBUG] External source error: {e}")
 
@@ -562,9 +561,9 @@ def _get_progress_response(session: Session, user: User, temp_memory) -> Tuple[s
     lines = [
         "📊 " + ("*My progress:*" if lang == "en" else "*Мой прогресс:*"),
         "",
-        f"⭐ " + (f"Points: *{points}*" if lang == "en" else f"Очки: *{points}*"),
-        f"✅ " + (f"Mastered: {len(mastered)}" if lang == "en" else f"Выучено: {len(mastered)}"),
-        f"📖 " + (f"In progress: {len(learning)}" if lang == "en" else f"В процессе: {len(learning)}"),
+        "⭐ " + (f"Points: *{points}*" if lang == "en" else f"Очки: *{points}*"),
+        "✅ " + (f"Mastered: {len(mastered)}" if lang == "en" else f"Выучено: {len(mastered)}"),
+        "📖 " + (f"In progress: {len(learning)}" if lang == "en" else f"В процессе: {len(learning)}"),
     ]
 
     if mastered:
@@ -672,7 +671,7 @@ def handle_message(
                         session.commit()
                         session.refresh(poem)
                     
-                    print(f"[DEBUG] Calling _start_specific_poem_learning")
+                    print("[DEBUG] Calling _start_specific_poem_learning")
                     # Start learning this poem
                     result = _start_specific_poem_learning(session, user, poem, temp_memory)
                     print(f"[DEBUG] Result stage: {result[2]}")

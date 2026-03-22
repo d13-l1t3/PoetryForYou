@@ -14,16 +14,16 @@ _test_db_path = _test_db.name
 _test_db.close()
 os.environ["DATABASE_URL"] = f"sqlite:///{_test_db_path}"
 
-import pytest
-import sys
+import pytest  # noqa: E402
+import sys  # noqa: E402
 
 # Add backend to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from fastapi.testclient import TestClient
-from app.main import app
-from app.db import engine
-from sqlmodel import SQLModel
+from fastapi.testclient import TestClient  # noqa: E402
+from app.main import app  # noqa: E402
+from app.db import engine  # noqa: E402
+from sqlmodel import SQLModel  # noqa: E402
 
 
 @pytest.fixture(autouse=True)

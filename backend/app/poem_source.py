@@ -741,7 +741,6 @@ class GooglePoemSearch:
                            ' - Читать стихи', ' — Стихи русских поэтов']:
                 title = title.replace(suffix, '')
             title = title.strip()
-            snippet = item.get('snippet', '')
             
             # CSE already restricts to poetry sites, so accept ALL results
             # Just skip obviously non-poem URLs
