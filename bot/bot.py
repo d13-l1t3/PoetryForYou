@@ -1,8 +1,11 @@
 import os
 
+import logging
 import httpx
 from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
+
+logger = logging.getLogger(__name__)
 
 
 BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL", "http://localhost:8000").rstrip("/")
@@ -82,7 +85,7 @@ async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # Show status for text that might take time (search, LLM queries)
     status_id = None
-    if not text.startswith("/") or text.startswith(("/learn", "/review", "/library")):
+    if not text.startswith("/") or text.startswith(("/learn", "/search", "/review", "/library")):
         status_id = await _send_status(update, "💭 Думаю...")
 
     try:
@@ -184,7 +187,7 @@ async def on_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
     # Show status for commands that may take time
     status_id = None
-    if text.startswith(("/learn", "/review", "/library", "/leaderboard", "/progress", "/profile")):
+    if text.startswith(("/learn", "/search", "/review", "/library", "/leaderboard", "/progress", "/profile")):
         status_id = await _send_status(update, "⏳ Загружаю...")
 
     try:
@@ -200,6 +203,7 @@ def main() -> None:
         raise RuntimeError("TELEGRAM_BOT_TOKEN is required")
 
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+    app.add_error_handler(error_handler)
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_command))
     # Handle all other commands
@@ -208,6 +212,18 @@ def main() -> None:
     app.add_handler(MessageHandler(filters.VOICE, on_voice))
 
     app.run_polling(allowed_updates=Update.ALL_TYPES)
+
+
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Log errors and notify user."""
+    logger.error("Exception while handling an update:", exc_info=context.error)
+    if isinstance(update, Update) and update.message:
+        try:
+            await update.message.reply_text(
+                "⚠️ Произошла ошибка. Попробуйте позже или нажмите /start"
+            )
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":

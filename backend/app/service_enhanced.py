@@ -6,7 +6,7 @@ from __future__ import annotations
 import os
 import re
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List, Dict, Any, Tuple
 
 from sqlmodel import Session, select
@@ -214,7 +214,7 @@ def _save_progress_from_session(session: Session, temp_session: ActivePoemSessio
     progress.last_chunk_index = temp_session.current_chunk_index
     progress.total_chunks = len(temp_session.chunks)
     progress.learned_chunks = ",".join(map(str, temp_session.learned_chunks))
-    progress.last_accessed = datetime.utcnow()
+    progress.last_accessed = datetime.now(timezone.utc)
     
     # Save last learned text for context
     if temp_session.learned_chunks:
@@ -224,7 +224,7 @@ def _save_progress_from_session(session: Session, temp_session: ActivePoemSessio
     # Update status
     if temp_session.current_chunk_index >= len(temp_session.chunks):
         progress.status = "completed"
-        progress.completed_at = datetime.utcnow()
+        progress.completed_at = datetime.now(timezone.utc)
     else:
         progress.status = "paused"
     
@@ -440,7 +440,7 @@ def _update_spaced_repetition(progress: UserPoemProgress, score: float) -> None:
         progress.status = "learning"
     
     progress.last_score = score
-    progress.due_at = datetime.utcnow() + timedelta(days=progress.interval_days)
+    progress.due_at = datetime.now(timezone.utc) + timedelta(days=progress.interval_days)
 
 
 def _make_library_response(library_result: Dict[str, Any]) -> Tuple[str, List[str], str]:
@@ -1182,7 +1182,7 @@ def _start_review(session: Session, user: User, temp_memory) -> Tuple[str, List[
         ).first()
         # Only review if there's progress and it's not freshly completed
         just_completed = (progress and progress.status in ("completed", "mastered")
-                         and progress.due_at and progress.due_at > datetime.utcnow())
+                         and progress.due_at and progress.due_at > datetime.now(timezone.utc))
         if not just_completed:
             poem = session.get(Poem, user.active_poem_id)
             if poem:
@@ -1196,7 +1196,7 @@ def _start_review(session: Session, user: User, temp_memory) -> Tuple[str, List[
                 )
     
     # PRIORITY 2: Check for due reviews
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     due_progress = session.exec(
         select(UserPoemProgress)
         .where(UserPoemProgress.user_id == user.id)
@@ -1344,7 +1344,7 @@ def _check_review_answer(session: Session, user: User, temp_memory, user_answer:
     # Update progress
     progress = _get_or_create_progress(session, user.id, poem.id)
     progress.last_score = score
-    progress.last_accessed = datetime.utcnow()
+    progress.last_accessed = datetime.now(timezone.utc)
     
     # Update spaced repetition
     _update_spaced_repetition(progress, score)

@@ -3,15 +3,15 @@ services:
     image: postgres:16
     restart: unless-stopped
     environment:
-      POSTGRES_USER: poetry
-      POSTGRES_PASSWORD: poetry
-      POSTGRES_DB: poetry
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    # ports:  # NOT exposed to public internet — only accessible within Docker network
+    #   - "5432:5432"
     volumes:
       - poetry_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U poetry"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,7 +21,7 @@ services:
       context: ./backend
     restart: unless-stopped
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://poetry:poetry@db:5432/poetry}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-google/gemini-2.0-flash}
       WHISPER_MODEL: ${WHISPER_MODEL:-small}
@@ -30,8 +30,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    ports:
-      - "8000:8000"
+    # ports:  # NOT exposed to public internet — bot accesses via Docker network
+    #   - "8000:8000"
 
   bot:
     build:

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from sqlmodel import Field, SQLModel, Session, create_engine
+from sqlalchemy import BigInteger, Column
 
 from app.config import settings
 
@@ -13,8 +14,8 @@ engine = create_engine(settings.database_url, echo=False)
 
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    telegram_id: int = Field(index=True, unique=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    telegram_id: int = Field(sa_column=Column(BigInteger, index=True, unique=True))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     language_pref: str = "mix"  # en|ru|mix
     level: str = "intermediate"  # beginner|intermediate|advanced
@@ -29,7 +30,7 @@ class User(SQLModel, table=True):
 class Interaction(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(index=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     user_text: str
     bot_text: str
@@ -52,7 +53,7 @@ class LearningItem(SQLModel, table=True):
     poem_id: int = Field(index=True)
 
     status: str = "new"  # new|learning|mastered
-    due_at: datetime = Field(default_factory=datetime.utcnow)
+    due_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     reps: int = 0
     ease: float = 2.3
@@ -74,12 +75,12 @@ class UserPoemProgress(SQLModel, table=True):
     last_session_text: str = ""  # Last chunk text user saw (for context)
 
     # Timestamps
-    started_at: datetime = Field(default_factory=datetime.utcnow)
-    last_accessed: datetime = Field(default_factory=datetime.utcnow)
+    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_accessed: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: Optional[datetime] = None
 
     # Spaced repetition data
-    due_at: datetime = Field(default_factory=datetime.utcnow)
+    due_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     reps: int = 0
     ease: float = 2.3
     interval_days: int = 0
@@ -104,7 +105,7 @@ class UserPreferences(SQLModel, table=True):
     # Learning pace
     chunks_per_session: int = 3  # How many chunks to show per session
 
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 def create_db_and_tables() -> None:

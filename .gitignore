@@ -21,3 +21,6 @@ __pycache__/
 
 # Database
 *.db
+
+# Server logs (may contain sensitive information)
+docker-logs.txt

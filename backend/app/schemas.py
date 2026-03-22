@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 
 class IncomingMessage(BaseModel):
     telegram_id: int
-    text: Optional[str] = None
+    text: Optional[str] = Field(default=None, max_length=2000)
     # Phase B uses a separate /voice endpoint (multipart upload).
 
 
@@ -22,5 +22,5 @@ class MessageResponse(BaseModel):
     reply: BotReply
     intent: str
     stage: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
