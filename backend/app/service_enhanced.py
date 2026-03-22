@@ -761,7 +761,7 @@ def handle_message(
             return _make_library_response(result)
         
         if cmd in ("/search", "/поиск", "/найти"):
-            user.stage = "idle"
+            user.stage = "searching"
             session.add(user)
             session.commit()
             lang = user.language_pref
@@ -934,6 +934,58 @@ def handle_message(
             session.add(user)
             session.commit()
             # Fall through to intent classification below
+    
+    # === SEARCHING MODE (user typed /search and now sends query) ===
+    if user.stage == "searching" and raw and not raw.startswith("/"):
+        # Treat any text (including voice transcription) as a search query
+        # directly — skip LLM intent classification
+        user.stage = "idle"
+        session.add(user)
+        session.commit()
+        
+        # Extract search keywords and search
+        search_query = extract_search_keywords(raw)
+        print(f"[DEBUG] Search mode: extracted keywords '{search_query}' from '{raw}'")
+        
+        external_poems = fetch_poems_for_user(search_query, limit=10)
+        
+        if external_poems and len(external_poems) > 0:
+            temp_memory._poem_selections = getattr(temp_memory, '_poem_selections', {})
+            temp_memory._poem_selections[user.telegram_id] = {
+                "options": external_poems,
+                "query": search_query
+            }
+            user.stage = "choosing_poem"
+            session.add(user)
+            session.commit()
+            
+            lang = user.language_pref
+            message_lines = [t("search_found", lang, query=search_query)]
+            btn_list = []
+            
+            for i, ext_poem in enumerate(external_poems[:10], 1):
+                preview = _get_first_lines(ext_poem.text, 2)
+                message_lines.append(
+                    f"\n{i}. 📜 {ext_poem.title} — {ext_poem.author}\n"
+                    f"   \"{preview}\""
+                )
+                btn_list.append(str(i))
+            
+            message_lines.append(t("search_choose", lang))
+            btn_list.append("❌ /cancel" if lang == "en" else "❌ /отмена")
+            
+            return (
+                "\n".join(message_lines),
+                btn_list,
+                "choosing"
+            )
+        
+        lang = user.language_pref
+        return (
+            t("search_not_found", lang, query=search_query),
+            ["/library", "/learn"],
+            "not_found"
+        )
     
     # === REVIEW MODE ===
     if user.stage == "reviewing" and user.active_poem_id:
