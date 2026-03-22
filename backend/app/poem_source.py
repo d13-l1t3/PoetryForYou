@@ -336,6 +336,14 @@ class HardcodedPoems:
             tags="свобода,дружба",
             difficulty=2
         ),
+        ExternalPoem(
+            title="У лукоморья дуб зелёный",
+            author="Александр Пушкин",
+            text="У лукоморья дуб зелёный;\nЗлатая цепь на дубе том:\nИ днём и ночью кот учёный\nВсё ходит по цепи кругом;\nИдёт направо — песнь заводит,\nНалево — сказку говорит.\n\nТам чудеса: там леший бродит,\nРусалка на ветвях сидит;\nТам на неведомых дорожках\nСледы невиданных зверей;\nИзбушка там на курьих ножках\nСтоит без окон, без дверей;\nТам лес и дол видений полны;\nТам о заре прихлынут волны\nНа брег песчаный и пустой,\nИ тридцать витязей прекрасных\nЧредой из вод выходят ясных,\nИ с ними дядька их морской;\nТам королевич мимоходом\nПленяет грозного царя;\nТам в облаках перед народом\nЧерез леса, через моря\nКолдун несёт богатыря;\nВ темнице там царевна тужит,\nА бурый волк ей верно служит;\nТам ступа с Бабою Ягой\nИдёт, бредёт сама собой,\nТам царь Кащей над златом чахнет;\nТам русский дух... там Русью пахнет!\nИ там я был, и мёд я пил;\nУ моря видел дуб зелёный;\nПод ним сидел, и кот учёный\nСвои мне сказки говорил.",
+            language="ru",
+            tags="сказка,детство",
+            difficulty=2
+        ),
         # === MORE ЕСЕНИН ===
         ExternalPoem(
             title="Письмо матери",
@@ -457,37 +465,43 @@ class HardcodedPoems:
     ]
     
     def search_poems(self, query: str, limit: int = 5) -> List[ExternalPoem]:
-        """Search in hardcoded poems."""
+        """Search in hardcoded poems with scored ranking.
+        Title matches get highest priority, then author, then text."""
         query_lower = query.lower()
-        results = []
+        query_words = [w for w in query_lower.split() if len(w) > 2]
+        scored: list[tuple[int, ExternalPoem]] = []
         
         for poem in self.POEMS:
-            # Check if query matches title, author, or contains text
             author_lower = poem.author.lower()
             title_lower = poem.title.lower()
+            score = 0
             
-            # Direct author match (handle different forms)
-            if (query_lower in author_lower or 
+            # Title match (highest priority)
+            if query_lower in title_lower or title_lower in query_lower:
+                score = 10
+            else:
+                # Check individual words against title
+                title_word_hits = sum(1 for w in query_words if w in title_lower)
+                if title_word_hits > 0:
+                    score = 5 + title_word_hits
+            
+            # Author match
+            if (query_lower in author_lower or
                 author_lower in query_lower or
                 self._normalize_name(query_lower) in self._normalize_name(author_lower) or
                 self._normalize_name(author_lower) in self._normalize_name(query_lower)):
-                results.append(poem)
-                if len(results) >= limit:
-                    break
+                score += 3
             
-            # Direct title match
-            elif query_lower in title_lower or title_lower in query_lower:
-                results.append(poem)
-                if len(results) >= limit:
-                    break
+            # Text word match (lowest priority)
+            if score == 0 and any(w in poem.text.lower() for w in query_words):
+                score = 1
             
-            # Word match in text (for longer queries)
-            elif any(word in poem.text.lower() for word in query_lower.split() if len(word) > 3):
-                results.append(poem)
-                if len(results) >= limit:
-                    break
+            if score > 0:
+                scored.append((score, poem))
         
-        return results
+        # Sort by score descending, return top results
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return [poem for _, poem in scored[:limit]]
     
     def _normalize_name(self, name: str) -> str:
         """Normalize name by removing common endings and prefixes."""
