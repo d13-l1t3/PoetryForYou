@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r backend/requirements.txt
+          pip install pytest pytest-cov ruff bandit
+
+      - name: Lint with ruff
+        run: ruff check backend/ --output-format=text
+
+      - name: Security scan with bandit
+        run: bandit -r backend/app/ -ll --format txt || true
+
+      - name: Run tests with coverage
+        env:
+          DATABASE_URL: "sqlite:///./test_poetry.db"
+        run: |
+          cd backend
+          pytest tests/ --cov=app --cov-report=term-missing -v
