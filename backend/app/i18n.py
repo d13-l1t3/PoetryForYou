@@ -199,19 +199,6 @@ _STRINGS = {
         "en": "Choose a poem number from the list above or press ❌ /cancel",
     },
 
-    # Search
-    "search_found": {
-        "ru": "🔍 Нашёл варианты по запросу \"{query}\":\n",
-        "en": "🔍 Found results for \"{query}\":\n",
-    },
-    "search_choose": {
-        "ru": "\n\nВыбери номер стиха, который хочешь выучить:",
-        "en": "\n\nChoose a poem number to learn:",
-    },
-    "search_not_found": {
-        "ru": "❌ Не нашёл стихи по запросу \"{query}\"\n\nПопробуй:\n• Другие слова из стиха\n• Имя автора\n• Или выбери из /library",
-        "en": "❌ No poems found for \"{query}\"\n\nTry:\n• Different words from the poem\n• Author name\n• Or browse /library",
-    },
 
     # Completed all chunks
     "completed_all": {
@@ -247,12 +234,8 @@ _STRINGS = {
         "en": "Language: {language}.\nWhat would you like to do?",
     },
 
-    # Fallback
-    "fallback_chat": {
-        "ru": "Привет! Чем могу помочь?\n\n📚 /library — библиотека\n🔍 /search — найти стих\n🔄 /review — повторить",
-        "en": "Hi! How can I help?\n\n📚 /library — browse poems\n🔍 /search — find a poem\n🔄 /review — review",
-    },
 }
+
 
 # Localized button sets
 _BUTTONS = {

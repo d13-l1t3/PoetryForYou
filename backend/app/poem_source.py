@@ -7,7 +7,7 @@ from __future__ import annotations
 import os
 import re
 import random
-import json
+
 from dataclasses import dataclass
 from typing import List, Optional
 import httpx
@@ -52,6 +52,7 @@ class LiteraRuSearch:
     
     def _search_by_author(self, query: str, limit: int) -> List[ExternalPoem]:
         """Search by author name."""
+        poems = []
         try:
             # Search for author page
             search_url = f"https://litera.ru/search?q={query.replace(' ', '+')}"

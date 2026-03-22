@@ -4,10 +4,10 @@ Handles poem browsing by authors, themes, and recommendations.
 """
 from __future__ import annotations
 
-from typing import List, Optional, Dict, Any
+from typing import Optional, Dict, Any
 from sqlmodel import Session, select
 
-from app.db import Poem, User, UserPreferences, UserPoemProgress
+from app.db import Poem, User, UserPoemProgress
 
 
 class LibraryService:
@@ -198,7 +198,7 @@ class LibraryService:
         buttons.append(["⬅️ Назад"])
         
         return {
-            "text": f"⭐ Рекомендуемые стихи:\n\nВыбери стихотворение:",
+            "text": "⭐ Рекомендуемые стихи:\n\nВыбери стихотворение:",
             "buttons": buttons
         }
     

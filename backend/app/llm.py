@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from functools import lru_cache
-from typing import Optional
+from typing import Optional  # noqa: F401  (used by type hints in doc comments)
 
 from app.i18n import t as t_i18n
 
