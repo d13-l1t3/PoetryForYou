@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r backend/requirements.txt
-          pip install pytest pytest-cov ruff bandit
+          pip install pytest pytest-cov ruff bandit mypy
 
       - name: Lint with ruff
         run: ruff check backend/ --output-format=github || true
@@ -30,6 +30,10 @@ jobs:
 
       - name: Security scan with bandit
         run: bandit -r backend/app/ -ll --format txt || true
+
+      - name: Type check with mypy
+        run: mypy backend/app/main.py backend/app/schemas.py --ignore-missing-imports --no-error-summary || true
+        continue-on-error: true
 
       - name: Run tests with coverage
         env:

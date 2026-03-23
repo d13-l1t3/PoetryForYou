@@ -1,0 +1,294 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[margin=2cm]{geometry}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{titling}
+\usepackage{listings}
+\setlength{\parskip}{2pt}
+\setlist{nosep, leftmargin=*}
+
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    frame=single,
+    language=Python
+}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue
+}
+
+\title{\textbf{Assignment 4: Quality Assurance \& Automation}\\[0.5em]
+\large Software Project --- Spring 2026}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Project} & PoetryForYou --- Telegram Poetry Learning Bot \\
+\textbf{Customer} & Nursultan Askarbekuly \\
+\textbf{Team Member} & Egor Zhukov (Solo Developer) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{What I Did This Sprint}
+\begin{enumerate}
+    \item Added voice recitation with Whisper STT (\#6) and online poem search (\#8).
+    \item Implemented spaced repetition reminders (\#9) and progress dashboard (\#10).
+    \item Wrote 5 unit tests and 5 integration tests.
+    \item Set up GitHub Actions CI pipeline: linting, tests, coverage report.
+    \item Explored QA tools for Python and documented findings.
+    \item Deployed the updated MVP and recorded a 2-min demo video.
+\end{enumerate}
+
+\textbf{Non-participation:} N/A (solo project).
+
+% ============================================================
+% SPRINT PLANNING
+% ============================================================
+
+\section{Sprint 2 Planning}
+
+\textbf{Milestone:} \href{https://github.com/d13-l1t3/PoetryForYou/milestone/2}{Sprint 2 Milestone (link)}
+
+\textbf{Sprint Goal:} \textit{Add voice recitation, online search, and spaced repetition. Set up automated testing and CI pipeline.}
+
+\textbf{Backlog:} \href{https://github.com/d13-l1t3/PoetryForYou/issues}{GitHub Issues (link)}
+
+\subsection*{Story Points Tracking}
+
+\begin{center}
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Metric} & \textbf{Value} \\
+\hline
+Total backlog & 65 SP \\
+\hline
+Sprint 1 completed & 31 SP \\
+\hline
+Sprint 2 planned & 26 SP \\
+\hline
+Sprint 2 completed & 26 SP \\
+\hline
+Cumulative velocity & 57 SP / 2 sprints \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection*{Sprint 2 Backlog}
+
+\textbf{\#6 --- Voice recitation via Whisper (8 SP)}\\
+\texttt{GIVEN} the user is learning a chunk,\\
+\texttt{WHEN} they send a voice message instead of typing,\\
+\texttt{THEN} the bot transcribes it with Whisper and compares against the original, returning a score.
+
+\textbf{\#8 --- Online poem search (5 SP)}\\
+\texttt{GIVEN} the user wants a poem not in the library,\\
+\texttt{WHEN} they type a search query,\\
+\texttt{THEN} the bot searches online sources and offers matching poems to learn.
+
+\textbf{\#9 --- Spaced repetition (5 SP)}\\
+\texttt{GIVEN} the user has completed a poem,\\
+\texttt{WHEN} the SM-2 algorithm schedules a review,\\
+\texttt{THEN} the bot reminds the user via \texttt{/review} and tracks due dates.
+
+\textbf{\#10 --- Progress dashboard (3 SP)}\\
+\texttt{GIVEN} the user sends \texttt{/progress},\\
+\texttt{WHEN} the bot receives it,\\
+\texttt{THEN} it displays: poems mastered, poems in progress, total points, streak.
+
+\textbf{QA --- Unit \& integration tests (5 SP, new)}\\
+\texttt{GIVEN} the codebase has core functions,\\
+\texttt{WHEN} the CI pipeline runs,\\
+\texttt{THEN} 10 automated tests pass (5 unit + 5 integration).
+
+\subsection*{Sprint Review \& Retrospective}
+
+\textbf{Completed:} All 5 items (26~SP). Voice recitation, search, spaced repetition, progress, and tests are all working.
+
+\textbf{What went well:}
+\begin{enumerate}
+    \item Whisper integration was straightforward with \texttt{faster-whisper} --- transcription takes 2--3 seconds.
+    \item CI pipeline catches errors early --- found a bug in the search function during the first run.
+    \item Spaced repetition with SM-2 works well for scheduling reviews.
+\end{enumerate}
+
+\textbf{What didn't go well:}
+\begin{enumerate}
+    \item Voice messages over 10~MB are rejected --- need to handle compression or warn the user.
+    \item Online search sometimes returns irrelevant results --- needs better filtering.
+    \item Writing integration tests for the Telegram bot is difficult --- had to mock httpx calls.
+\end{enumerate}
+
+\textbf{Action points:} (1) Add file size warning before voice upload fails. (2) Improve search ranking.
+
+% ============================================================
+% DEPLOYED PRODUCT
+% ============================================================
+
+\section{Deployed Product}
+
+\textbf{Live bot:} \href{https://t.me/PoetryforYou_bot}{@PoetryforYou\_bot}
+
+\textbf{Demo video (2 min):} \href{https://DEMO_VIDEO_LINK_HERE}{Demo video (link)} --- shows: voice recitation, online search, progress dashboard, spaced repetition reminder.
+
+\textbf{New since last sprint:} Voice input via Whisper, online poem search, \texttt{/progress} command, spaced repetition scheduling.
+
+% ============================================================
+% QA TOOLS EXPLORATION
+% ============================================================
+
+\section{QA Tools Exploration}
+
+\subsection*{Available Tools for Python + FastAPI}
+
+\begin{center}
+\footnotesize
+\begin{tabularx}{\textwidth}{l|l|X}
+\toprule
+\textbf{Tool} & \textbf{Category} & \textbf{Description} \\
+\midrule
+pytest & Testing & Standard Python test framework. Fixtures, parametrize, plugins. \\
+pytest-cov & Coverage & Coverage reporting plugin for pytest. \\
+unittest & Testing & Built-in Python test framework. More verbose than pytest. \\
+ruff & Linter & Fast Python linter (replaces flake8, isort, pyflakes). Written in Rust. \\
+flake8 & Linter & Classic Python linter. PEP 8 enforcement. \\
+mypy & Type checker & Static type analysis for Python. \\
+pylint & Linter & Comprehensive linter with code smell detection. \\
+bandit & Security & Finds common security issues in Python code. \\
+httpx & Testing & Async HTTP client, used with FastAPI's TestClient for integration tests. \\
+Postman/Newman & API testing & API testing and automation from the command line. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection*{Tools We Use}
+
+\begin{itemize}
+    \item \textbf{pytest + pytest-cov} --- main test runner with coverage. Chosen because it's the standard for Python and integrates easily with CI.
+    \item \textbf{ruff} --- linter. Chosen over flake8 because it's 10--100x faster and combines multiple tools (linting + import sorting + formatting checks).
+    \item \textbf{bandit} --- security scanner. Chosen as the ``+1 QA tool'' because it catches hardcoded passwords, SQL injection risks, and other security issues relevant to a bot handling user data.
+    \item \textbf{httpx + FastAPI TestClient} --- for integration tests. FastAPI's built-in test client makes it easy to test endpoints without running a server.
+\end{itemize}
+
+% ============================================================
+% UNIT TESTS
+% ============================================================
+
+\section{Automated Tests}
+
+\textbf{Test files:} \href{https://github.com/d13-l1t3/PoetryForYou/tree/main/backend/tests}{backend/tests/ (link)}
+
+\subsection*{Unit Tests (5)}
+
+\begin{enumerate}
+    \item \textbf{test\_chunk\_splitting} --- Verifies that a poem is split into chunks of 2--4 lines. Edge case: poem with 1 line.
+    \item \textbf{test\_similarity\_score} --- Checks that fuzzy matching returns correct scores: 100\% for exact match, 0\% for empty input, partial score for typos.
+    \item \textbf{test\_sm2\_scheduling} --- Tests the SM-2 spaced repetition algorithm: correct interval calculation after scores of 5, 3, and 1.
+    \item \textbf{test\_i18n\_translation} --- Verifies that \texttt{t("start\_greeting", "en")} returns English and \texttt{t("start\_greeting", "ru")} returns Russian.
+    \item \textbf{test\_user\_stage\_transitions} --- Checks that user stage transitions follow the expected flow: \texttt{onboarding\_language} $\rightarrow$ \texttt{onboarding\_level} $\rightarrow$ \texttt{idle}.
+\end{enumerate}
+
+\subsection*{Integration Tests (5)}
+
+\begin{enumerate}
+    \item \textbf{test\_health\_endpoint} --- \texttt{GET /health} returns \texttt{\{"ok": true\}} with status 200.
+    \item \textbf{test\_start\_onboarding} --- \texttt{POST /message} with \texttt{/start} creates a new user and returns a language selection prompt.
+    \item \textbf{test\_full\_onboarding\_flow} --- Sends \texttt{/start} $\rightarrow$ \texttt{ru} $\rightarrow$ \texttt{intermediate} and verifies the user reaches \texttt{idle} stage.
+    \item \textbf{test\_library\_browsing} --- After onboarding, \texttt{POST /message} with \texttt{/library} returns a paginated poem list.
+    \item \textbf{test\_message\_without\_text} --- \texttt{POST /message} with missing \texttt{text} field returns 400 error.
+\end{enumerate}
+
+% ============================================================
+% CI/CD PIPELINE
+% ============================================================
+
+\section{CI/CD Pipeline}
+
+\textbf{Pipeline:} \href{https://github.com/d13-l1t3/PoetryForYou/actions}{GitHub Actions (link)}
+
+The pipeline runs on every push to \texttt{main} and on pull requests. Configuration file: \texttt{.github/workflows/ci.yml}.
+
+\subsection*{Pipeline Stages}
+
+\begin{enumerate}
+    \item \textbf{Lint} --- Run \texttt{ruff check backend/} to enforce code style and catch errors.
+    \item \textbf{Security} --- Run \texttt{bandit -r backend/app/} to scan for security issues.
+    \item \textbf{Test} --- Run \texttt{pytest backend/tests/ --cov=backend/app --cov-report=term-missing} to execute all tests with coverage.
+    \item \textbf{Coverage report} --- Coverage results are printed in the CI log. Target: $\geq$60\%.
+\end{enumerate}
+
+\subsection*{CI Configuration}
+
+\begin{lstlisting}[language=yaml, caption=.github/workflows/ci.yml]
+name: CI
+on: [push, pull_request]
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r backend/requirements.txt
+      - run: pip install pytest pytest-cov ruff bandit
+      - name: Lint
+        run: ruff check backend/
+      - name: Security scan
+        run: bandit -r backend/app/ -ll
+      - name: Tests + Coverage
+        run: pytest backend/tests/ --cov=backend/app
+            --cov-report=term-missing
+\end{lstlisting}
+
+\subsection*{Screenshots}
+
+\textit{(Include screenshots of a passing CI run, linter output, and coverage report from GitHub Actions.)}
+
+% ============================================================
+% MVP ROADMAP UPDATE
+% ============================================================
+
+\section{MVP Roadmap Update}
+
+\begin{center}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Version} & \textbf{Features} & \textbf{Status} \\
+\hline
+MVP v0 & Bot responds to \texttt{/start}, onboarding & Done (Sprint 0) \\
+\hline
+MVP v1 & Library, chunk learning, text testing, score & Done (Sprint 1) \\
+\hline
+MVP v1.5 & Voice, search, spaced repetition, progress & Done (Sprint 2) \\
+\hline
+MVP v2 & Leaderboard, recommendations, LLM features & Planned (Sprint 3) \\
+\hline
+MVP v3 & Final polished version, full documentation & Planned (Sprint 4) \\
+\hline
+\end{tabular}
+\end{center}
+
+% ============================================================
+% AI USAGE
+% ============================================================
+
+\section{AI Usage}
+
+I used ChatGPT to help explore QA tools for Python and draft the CI pipeline configuration. The test implementations, code changes, and deployment were done by me. AI was also used to help format the acceptance criteria and this report.
+
+\end{document}

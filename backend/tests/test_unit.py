@@ -142,3 +142,98 @@ class TestCalcPoints:
     def test_empty_poem(self):
         # Empty string has 1 "word" (empty) -> min 1
         assert _calc_points("") >= 0
+
+
+# ─────────── Test 6: Text Chunk Splitting ─────────── #
+
+class TestChunkSplitting:
+    def test_split_by_stanzas(self):
+        from app.service_enhanced import _split_into_chunks
+        poem = "Строка один\nСтрока два\n\nСтрока три\nСтрока четыре"
+        chunks = _split_into_chunks(poem)
+        assert isinstance(chunks, list)
+        assert len(chunks) >= 1
+        assert all(isinstance(c, str) for c in chunks)
+
+    def test_short_poem_single_chunk(self):
+        from app.service_enhanced import _split_into_chunks
+        poem = "Короткий стих"
+        chunks = _split_into_chunks(poem)
+        assert len(chunks) == 1
+
+    def test_empty_poem_chunk(self):
+        from app.service_enhanced import _split_into_chunks
+        chunks = _split_into_chunks("")
+        assert len(chunks) >= 1
+
+
+# ─────────── Test 7: First Lines Preview ─────────── #
+
+class TestFirstLines:
+    def test_two_lines(self):
+        from app.service_enhanced import _get_first_lines
+        text = "Line one\nLine two\nLine three"
+        preview = _get_first_lines(text, 2)
+        assert "Line one" in preview
+        assert "Line two" in preview
+
+    def test_single_line(self):
+        from app.service_enhanced import _get_first_lines
+        text = "Only one line"
+        preview = _get_first_lines(text, 2)
+        assert "Only one line" in preview
+
+
+# ─────────── Test 8: Hardcoded Search Ranking ─────────── #
+
+class TestSearchRanking:
+    def test_title_match_first(self):
+        from app.poem_source import HardcodedPoems
+        hp = HardcodedPoems()
+        results = hp.search_poems("лукоморья", limit=5)
+        assert len(results) > 0
+        assert "лукоморья" in results[0].title.lower()
+
+    def test_author_search(self):
+        from app.poem_source import HardcodedPoems
+        hp = HardcodedPoems()
+        results = hp.search_poems("Пушкин", limit=10)
+        assert len(results) >= 3
+        assert all("Пушкин" in p.author for p in results)
+
+
+# ─────────── Test 9: Language Validation ─────────── #
+
+class TestLanguageValidation:
+    def test_valid_languages(self):
+        for lang in ("ru", "en", "mix"):
+            text = t("start_greeting", lang)
+            assert len(text) > 0
+
+    def test_buttons_have_commands(self):
+        btns = buttons("main_menu", "ru")
+        assert any(b.startswith("/") for b in btns)
+
+    def test_testing_buttons(self):
+        btns = buttons("testing", "ru")
+        assert isinstance(btns, list)
+        assert len(btns) > 0
+
+
+# ─────────── Test 10: Normalize Edge Cases ─────────── #
+
+class TestNormalizeEdgeCases:
+    def test_cyrillic_preserved(self):
+        result = _normalize("Привет мир")
+        assert "привет" in result
+
+    def test_mixed_language(self):
+        result = _normalize("Hello Мир 123")
+        assert "hello" in result
+        assert "мир" in result
+
+    def test_special_chars_removed(self):
+        result = _normalize("Стих—с «кавычками»!")
+        assert "«" not in result
+        assert "»" not in result
+        assert "!" not in result

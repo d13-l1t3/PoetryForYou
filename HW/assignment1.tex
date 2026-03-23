@@ -1,0 +1,167 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[margin=2cm]{geometry}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{titling}
+\setlength{\parskip}{2pt}
+\setlist{nosep, leftmargin=*}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue
+}
+
+\title{\textbf{Assignment 1: Deciding What to Build}\\[0.5em]
+\large Software Project --- Spring 2026}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+% ============================================================
+% TITLE PAGE
+% ============================================================
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Project} & PoetryForYou --- Telegram Poetry Learning Bot \\
+\textbf{Team Member} & Egor Zhukov \\
+\textbf{Role} & Solo Developer (Full-stack, DevOps, QA, Research) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{What I Did This Week}
+\begin{enumerate}
+    \item Researched the problem space --- looked at how people currently memorize poetry. Downloaded and tried 5 existing apps (Section~3).
+    \item Wrote the interview script. Tried to follow the Mom Test --- rewrote some questions that sounded too leading (Section~1).
+    \item Attended the group interview with the customer (25 min video call). Recorded with OBS. Took notes (Section~2).
+    \item Went through the recording again, wrote up the key takeaways and planned the MVP versions.
+    \item Built the comparison table and wrote this report.
+\end{enumerate}
+
+\vspace{1em}
+
+% ============================================================
+% INTERVIEW SCRIPT
+% ============================================================
+
+\section{Interview Script}
+
+\textbf{Customer:} Nursultan Askarbekuly, course instructor for Software Project.\\
+\textbf{Duration:} 25 minutes.\\
+\textbf{Format:} Video call (OBS recorded, audio backup in MP3).
+
+\subsection*{Closed-Ended Questions (with answers)}
+\begin{enumerate}
+    \item \textbf{Pre-loaded library or parse from websites?} --- Parsing is fine. Focus on classical RU/EN poetry.
+    \item \textbf{How many languages?} --- Two (Russian + English). Main focus on Russian.
+    \item \textbf{Add reminders?} --- Yes. Memorization is optional, so reminders are needed.
+    \item \textbf{Add gamification?} --- Later. Core mechanism must work first.
+    \item \textbf{AI agents for development?} --- ``No restrictions. Use whatever you want, the result matters.''
+\end{enumerate}
+
+\subsection*{Open-Ended Questions (with answers)}
+\begin{enumerate}[resume]
+    \item \textbf{Main problem to solve?} --- ``There is no problem --- there is a task: help users memorize poems.'' Two groups: children and adults (20--30 poems). Focus on one.
+    \item \textbf{How to recommend poems?} --- By difficulty, keywords, calendar context. Collaborative filtering if multiple users.
+    \item \textbf{How should recitation checking work?} --- Voice $\rightarrow$ transcribe $\rightarrow$ compare. Edge cases: repeated/skipped lines, mumbling. Fuzzy matching. Building a test audio dataset is ``the most valuable engineering work.''
+    \item \textbf{Expected UX?} --- ``I do not expect a web application inside the bot. I expect a conversation.'' Conversational flow with reply buttons or LLM.
+    \item \textbf{MVP expectations?} --- Small but already a product. 2--3 demos before March~25.
+\end{enumerate}
+
+\subsection*{Mom Test Improvements}
+The Mom Test: (1) talk about their life, not your idea; (2) ask about past specifics; (3) listen more.
+\begin{itemize}
+    \item \textbf{Before:} ``Should we add reminders?'' (leading) $\rightarrow$ \textbf{After:} ``How do you currently review memorized texts? Do you set reminders or just forget?''
+    \item \textbf{Before:} ``How should recitation checking work?'' (asks to design) $\rightarrow$ \textbf{After:} ``Walk me through what happens when you try to recite from memory. What do you do when stuck?''
+    \item \textbf{Before:} ``What UX do you expect?'' (hypothetical) $\rightarrow$ \textbf{After:} ``When you last used a Telegram bot, what made you keep or delete it?''
+\end{itemize}
+
+\section{Interview Notes}
+\textbf{Key observations:} The customer framed the product as a \textit{task} (not a problem): help people memorize poems. The bot format dictates UX --- must feel like a conversation, not a mini-app. Recitation edge cases (mumbling, skipped lines) are the main engineering challenge. He expects 2--3 demos before March~25. On AI: ``No restrictions, the result matters.''
+
+\textbf{Recording:} \href{https://YOUR_LINK_HERE}{Interview recording (link)} (\texttt{audio1234603782.m4a}).
+
+% ============================================================
+% PRODUCT RESEARCH
+% ============================================================
+
+\section{Product Research}
+Five apps were tested. Research board: \href{https://miro.com/welcome/NmRUUk1vMmlUdGlJQ1YwcDl0cEYzRnZDM0FESWJLZElpb0FFdzdNakFzMkQ0ODVOTGRxbjNWTHFrTHlyZzd6Ty9lN1QwYTBBSk9yUmNJSGFuczV1ZERNazZORkJuSXZ2WjNXYUV2ZEdZaGI4Wkw1N0p6Vy9hNlBDNjBWUWovZ0VnbHpza3F6REdEcmNpNEFOMmJXWXBBPT0hdjE=?share_link_id=125070385408}{Miro board (link)}.
+
+\begin{enumerate}
+    \item \textbf{Poems By Heart} (Inkle/Penguin) --- iOS. Word-removal game with 5 difficulty stages. 4 free + 25 paid Penguin Classics poems. Can record recitals. No Android, no Russian, no spaced repetition.
+    \item \textbf{Memorize By Heart} (Craig Walker) --- iOS/Android/Web, 4.8$\star$. Word hiding, first-letter typing, fill-in-blank, unscramble. Spaced repetition, group features. EN only, no voice check, no poem library.
+    \item \textbf{LearnPoem} (Evgeny Dorofeev) --- iOS. Russian school poems. Hides words, first-letter hints. Free. No voice, no AI, no spaced repetition.
+    \item \textbf{Memorize Anything} (Memorify) --- Android, 100K+ users. Divide-and-conquer chunking, cloze deletion, AI-powered adaptive learning, spaced repetition. No Telegram, no voice, no RU library.
+    \item \textbf{Poems} (RANKA s.r.o.) --- iOS. Spaced repetition, first-letter recall, import/export. No voice, no AI, no online search.
+\end{enumerate}
+
+\begin{center}
+\footnotesize
+\begin{tabularx}{\textwidth}{l|c|c|c|c|c|c}
+\toprule
+ & \textbf{PBH} & \textbf{MBH} & \textbf{Learn} & \textbf{Memo-} & \textbf{Poems} & \textbf{Poetry} \\
+ & \textbf{(Inkle)} & \textbf{(Walker)} & \textbf{Poem} & \textbf{rize Any} & \textbf{(RANKA)} & \textbf{ForYou} \\
+\midrule
+Chunked learning & Partial & Yes & Partial & Yes & No & \textbf{Yes} \\
+Voice recitation & Record & No & No & No & No & \textbf{Yes} \\
+AI features & No & No & No & Yes & No & \textbf{Yes} \\
+Spaced repetition & No & Yes & No & Yes & Yes & \textbf{Yes} \\
+Telegram bot & No & No & No & No & No & \textbf{Yes} \\
+Online search & No & No & No & No & No & \textbf{Yes} \\
+RU + EN & EN & EN & RU+EN & EN & EN & \textbf{Yes} \\
+Free & Partial & Partial & Free & Free & Free & \textbf{Free} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ============================================================
+% 1-PAGE REPORT
+% ============================================================
+
+\section{Report: Learnings and MVP Plan}
+
+\subsection*{Key Learnings}
+\begin{itemize}
+    \item The product is a \textit{task}, not a problem: help people memorize poems. Conversational UX is key --- ``I expect a conversation, not a web app inside a bot.''
+    \item Voice recitation checking is the main engineering challenge (edge cases: mumbling, skipped lines). Building an audio test dataset is the most valuable work.
+    \item Users need reminders since memorization is optional. No existing bot does this well.
+\end{itemize}
+
+\subsection*{MVP Versions}
+\begin{itemize}
+    \item \textbf{v1:} Chunk-based text learning + text-input testing + 15--20 hardcoded poems.
+    \item \textbf{v2:} Voice recitation (Whisper STT) + online poem search + spaced repetition.
+    \item \textbf{v3:} LLM intent classification + smart recommendations + browse-by-author/theme + RU/EN UI.
+\end{itemize}
+
+\subsection*{Questions for Further Clarification}
+\begin{itemize}
+    \item What chunk size is optimal? (2 lines, 4 lines, full stanza?)
+    \item Should the bot support group study sessions?
+    \item Is there a need for teacher/admin dashboard to assign poems?
+\end{itemize}
+
+\subsection*{AI/LLM Usage Disclosure}
+I used ChatGPT to help find and summarize info about existing apps during product research. The comparison table formatting was also done with AI help. The interview itself, all the questions, and the MVP planning are my own work.
+
+\subsection*{Next Steps}
+\begin{enumerate}
+    \item Set up the project repository and decide on the tech stack (leaning towards Python + Telegram Bot API).
+    \item Create a product backlog with user stories and start designing the bot conversation flow.
+    \item Build MVP~v1 --- a bot that can show poem chunks and test the user via text input.
+    \item Show it to the customer and get early feedback.
+\end{enumerate}
+
+\end{document}

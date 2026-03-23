@@ -140,3 +140,92 @@ def teardown_module():
         os.remove(_test_db_path)
     except OSError:
         pass
+
+
+# ─────────── Test 6: Voice Endpoint Validation ─────────── #
+
+class TestVoiceEndpoint:
+    def test_voice_requires_audio(self, client):
+        response = client.post(
+            "/voice",
+            data={"telegram_id": "777777"}
+        )
+        assert response.status_code == 422
+
+    def test_voice_rejects_large_file(self, client):
+        # Create a fake audio file > 10MB
+        huge_audio = b"\x00" * (11 * 1024 * 1024)
+        response = client.post(
+            "/voice",
+            data={"telegram_id": "888888"},
+            files={"audio": ("test.ogg", huge_audio, "audio/ogg")}
+        )
+        assert response.status_code == 413
+
+
+# ─────────── Test 7: Cleanup Endpoint ─────────── #
+
+class TestCleanupEndpoint:
+    def test_cleanup_returns_count(self, client):
+        response = client.post("/cleanup")
+        assert response.status_code == 200
+        data = response.json()
+        assert "cleaned_up" in data
+        assert isinstance(data["cleaned_up"], int)
+
+
+# ─────────── Test 8: Search Command Flow ─────────── #
+
+class TestSearchCommand:
+    def test_search_sets_stage(self, client):
+        # Onboard
+        client.post("/message", json={"telegram_id": 999001, "text": "/start"})
+        client.post("/message", json={"telegram_id": 999001, "text": "ru"})
+
+        # Search
+        response = client.post("/message", json={
+            "telegram_id": 999001,
+            "text": "/search"
+        })
+        assert response.status_code == 200
+        data = response.json()
+        assert data["intent"] == "search"
+        assert "🔍" in data["reply"]["text"]
+
+
+# ─────────── Test 9: Profile Command ─────────── #
+
+class TestProfileCommand:
+    def test_profile_returns_info(self, client):
+        # Onboard
+        client.post("/message", json={"telegram_id": 999002, "text": "/start"})
+        client.post("/message", json={"telegram_id": 999002, "text": "en"})
+
+        # Profile
+        response = client.post("/message", json={
+            "telegram_id": 999002,
+            "text": "/profile"
+        })
+        assert response.status_code == 200
+        data = response.json()
+        assert data["reply"]["text"]  # Should return some profile info
+
+
+# ─────────── Test 10: Review With No Poems ─────────── #
+
+class TestReviewNoPeems:
+    def test_review_empty(self, client):
+        # Onboard
+        client.post("/message", json={"telegram_id": 999003, "text": "/start"})
+        client.post("/message", json={"telegram_id": 999003, "text": "ru"})
+
+        # Try review with no poems learned
+        response = client.post("/message", json={
+            "telegram_id": 999003,
+            "text": "/review"
+        })
+        assert response.status_code == 200
+        data = response.json()
+        # Should indicate no poems to review
+        reply_text = data["reply"]["text"].lower()
+        assert "нет" in reply_text or "no" in reply_text or "пуст" in reply_text or "начн" in reply_text

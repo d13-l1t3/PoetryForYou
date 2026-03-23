@@ -1,0 +1,161 @@
+{
+  "info": {
+    "name": "PoetryForYou API",
+    "description": "API collection for the PoetryForYou Telegram Poetry Learning Bot. 4 endpoints for the FastAPI backend.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        },
+        "description": "Simple health check. Returns {\"ok\": true} when the server is running."
+      },
+      "response": [
+        {
+          "name": "200 OK",
+          "originalRequest": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\"ok\": true}"
+        }
+      ]
+    },
+    {
+      "name": "Send Message",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"telegram_id\": 123456789,\n  \"text\": \"/start\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/message",
+          "host": ["{{base_url}}"],
+          "path": ["message"]
+        },
+        "description": "Main text interaction endpoint. Send user input and receive bot reply with intent classification and user stage."
+      },
+      "response": [
+        {
+          "name": "200 - Start command",
+          "originalRequest": {
+            "method": "POST",
+            "url": {"raw": "{{base_url}}/message", "host": ["{{base_url}}"], "path": ["message"]},
+            "body": {"mode": "raw", "raw": "{\"telegram_id\": 123456789, \"text\": \"/start\"}"}
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"reply\": {\n    \"text\": \"Welcome to PoetryForYou! Choose your language:\",\n    \"suggested_replies\": [\"English\", \"Русский\", \"Mix\"]\n  },\n  \"intent\": \"start\",\n  \"stage\": \"onboarding_language\",\n  \"timestamp\": \"2026-03-22T12:00:00Z\"\n}"
+        },
+        {
+          "name": "200 - Learn command",
+          "originalRequest": {
+            "method": "POST",
+            "url": {"raw": "{{base_url}}/message", "host": ["{{base_url}}"], "path": ["message"]},
+            "body": {"mode": "raw", "raw": "{\"telegram_id\": 123456789, \"text\": \"/learn\"}"}
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"reply\": {\n    \"text\": \"Here are some poems you can learn:\\n1. Pushkin - Winter Evening\\n2. Shakespeare - Sonnet 18\",\n    \"suggested_replies\": [\"1\", \"2\", \"Search\"]\n  },\n  \"intent\": \"learn\",\n  \"stage\": \"idle\",\n  \"timestamp\": \"2026-03-22T12:01:00Z\"\n}"
+        },
+        {
+          "name": "400 - Missing text",
+          "originalRequest": {
+            "method": "POST",
+            "url": {"raw": "{{base_url}}/message", "host": ["{{base_url}}"], "path": ["message"]},
+            "body": {"mode": "raw", "raw": "{\"telegram_id\": 123456789}"}
+          },
+          "status": "Bad Request",
+          "code": 400,
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\"detail\": \"text is required for MVP (Phase A)\"}"
+        }
+      ]
+    },
+    {
+      "name": "Send Voice",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {"key": "telegram_id", "value": "123456789", "type": "text"},
+            {"key": "audio", "type": "file", "src": "", "description": "OGG/MP3 audio file (max 10 MB)"}
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/voice",
+          "host": ["{{base_url}}"],
+          "path": ["voice"]
+        },
+        "description": "Voice recitation endpoint. Upload an audio file (OGG/MP3) and get transcription + bot reply. Uses Whisper for speech-to-text."
+      },
+      "response": [
+        {
+          "name": "200 - Voice processed",
+          "status": "OK",
+          "code": 200,
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"reply\": {\n    \"text\": \"Your recitation score: 87%. Good job! You missed line 3.\",\n    \"suggested_replies\": [\"Try again\", \"Next chunk\", \"Back to menu\"]\n  },\n  \"intent\": \"recite_check\",\n  \"stage\": \"awaiting_check\",\n  \"timestamp\": \"2026-03-22T12:02:00Z\"\n}"
+        },
+        {
+          "name": "413 - File too large",
+          "status": "Request Entity Too Large",
+          "code": 413,
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\"detail\": \"Audio file too large (max 10 MB)\"}"
+        }
+      ]
+    },
+    {
+      "name": "Cleanup Sessions",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/cleanup",
+          "host": ["{{base_url}}"],
+          "path": ["cleanup"]
+        },
+        "description": "Cleanup expired temporary sessions and persist progress. Internal maintenance endpoint."
+      },
+      "response": [
+        {
+          "name": "200 - Cleaned up",
+          "status": "OK",
+          "code": 200,
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\"cleaned_up\": 3}"
+        }
+      ]
+    }
+  ]
+}

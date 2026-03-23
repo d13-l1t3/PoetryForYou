@@ -1,0 +1,318 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[margin=2cm]{geometry}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{titling}
+\usepackage{listings}
+\setlength{\parskip}{2pt}
+\setlist{nosep, leftmargin=*}
+
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    frame=single,
+    language=Python
+}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue
+}
+
+\title{\textbf{Assignment 5: Quality Attributes \& Architecture}\\[0.5em]
+\large Software Project --- Spring 2026}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Project} & PoetryForYou --- Telegram Poetry Learning Bot \\
+\textbf{Customer} & Nursultan Askarbekuly \\
+\textbf{Team Member} & Egor Zhukov (Solo Developer) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ==================== SPRINT 5 ====================
+\section{Sprint 5 Activities}
+
+\subsection*{Sprint Goal}
+Improve software quality through architecture documentation, quality attribute scenarios, extended test coverage, and CI pipeline enhancements.
+
+\subsection*{What I Did This Sprint}
+\begin{enumerate}
+    \item Created issue templates (User Story, Bug Report, Technical Task) and PR template.
+    \item Added 5 more unit tests and 5 more integration tests (total: 22 unit, 12 integration).
+    \item Added \texttt{mypy} static type checking to the CI pipeline.
+    \item Updated README with Development, QA, Build/Deploy, Architecture, and Secrets sections.
+    \item Documented quality attribute scenarios using ISO 25010.
+    \item Created architecture diagrams (component, sequence, deployment views).
+    \item Fixed voice search flow: added ``searching'' stage so voice messages bypass LLM intent classification.
+    \item Fixed deployment issues: DB healthcheck, Whisper cache, openai package, model ID.
+\end{enumerate}
+
+% ==================== TEMPLATES ====================
+\section{Issue \& PR Templates}
+
+Created three issue templates in \texttt{.github/ISSUE\_TEMPLATE/}:
+
+\begin{itemize}
+    \item \textbf{User Story} (\texttt{user\_story.md}): Follows ``As a \ldots I want \ldots so that \ldots'' format with acceptance criteria (GIVEN/WHEN/THEN), priority, and story points.
+    \item \textbf{Bug Report} (\texttt{bug\_report.md}): Steps to reproduce, expected/actual behavior, environment info.
+    \item \textbf{Technical Task} (\texttt{technical\_task.md}): For refactoring/infra work with implementation plan and acceptance criteria.
+\end{itemize}
+
+PR template (\texttt{.github/PULL\_REQUEST\_TEMPLATE.md}) includes a checklist: tests, lint, bandit, no secrets, README update, local Docker test.
+
+% ==================== TESTS ====================
+\section{Extended Test Suite}
+
+\subsection*{New Unit Tests (5 added)}
+\begin{longtable}{p{4cm}p{10cm}}
+\toprule
+\textbf{Test Class} & \textbf{What It Tests} \\
+\midrule
+TestChunkSplitting & Splitting poems into learning chunks by stanzas \\
+TestFirstLines & Preview text generation for search results \\
+TestSearchRanking & Title matches ranked above author-only matches \\
+TestLanguageValidation & All language codes produce valid translations \\
+TestNormalizeEdgeCases & Cyrillic, mixed-language, and special character handling \\
+\bottomrule
+\end{longtable}
+
+\subsection*{New Integration Tests (5 added)}
+\begin{longtable}{p{4cm}p{10cm}}
+\toprule
+\textbf{Test Class} & \textbf{What It Tests} \\
+\midrule
+TestVoiceEndpoint & Voice endpoint validation: missing audio (422), oversized file (413) \\
+TestCleanupEndpoint & Session cleanup endpoint returns count \\
+TestSearchCommand & \texttt{/search} sets correct stage and returns search prompt \\
+TestProfileCommand & \texttt{/profile} returns user profile info \\
+TestReviewNoPeems & \texttt{/review} with no learned poems returns helpful message \\
+\bottomrule
+\end{longtable}
+
+% ==================== CI ====================
+\section{CI Pipeline Improvements}
+
+Added \texttt{mypy} as a third static analysis tool (alongside \texttt{ruff} and \texttt{bandit}):
+
+\begin{lstlisting}[language=bash]
+# CI pipeline steps:
+1. ruff check       # Linting & style
+2. bandit scan      # Security vulnerabilities
+3. mypy check       # Static type checking (NEW)
+4. pytest + coverage # Unit & integration tests
+\end{lstlisting}
+
+The mypy step checks \texttt{main.py} and \texttt{schemas.py} with \texttt{--ignore-missing-imports} to catch type errors in the core API layer.
+
+% ==================== README ====================
+\section{README Updates}
+
+Added the following sections to \texttt{README.md}:
+
+\begin{itemize}
+    \item \textbf{Architecture}: System diagram, technology stack table, component descriptions.
+    \item \textbf{Development}: Local setup instructions, project structure tree.
+    \item \textbf{Quality Assurance}: CI pipeline table, test coverage summary, local test commands.
+    \item \textbf{Build \& Deployment}: Docker commands, VPS deployment guide, auto-restart config.
+    \item \textbf{Secrets Management}: Environment variable table, security practices.
+\end{itemize}
+
+% ==================== QUALITY ATTRIBUTES ====================
+\section{Quality Attribute Scenarios (ISO 25010)}
+
+\subsection*{1. Performance Efficiency --- Time Behavior}
+
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+\textbf{Source} & Telegram user \\
+\textbf{Stimulus} & Sends a text message (e.g., \texttt{/library}) \\
+\textbf{Environment} & Production Docker on VPS (1 vCPU, 2 GB RAM) \\
+\textbf{Artifact} & Backend API (\texttt{/message} endpoint) \\
+\textbf{Response} & Return JSON response \\
+\textbf{Measure} & Response time $\leq$ 500ms for text commands \\
+\bottomrule
+\end{tabularx}
+
+\textit{How achieved}: FastAPI with Uvicorn provides async handling. Database queries use SQLModel with indexes on \texttt{telegram\_id}. All hardcoded poem searches are in-memory ($<$10ms).
+
+\subsection*{2. Security --- Confidentiality}
+
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+\textbf{Source} & External attacker \\
+\textbf{Stimulus} & Attempts to access secrets or database \\
+\textbf{Environment} & Production Docker deployment \\
+\textbf{Artifact} & Docker containers, source code, `.env` file \\
+\textbf{Response} & Secrets remain protected \\
+\textbf{Measure} & Zero secrets in source code; container runs as non-root \\
+\bottomrule
+\end{tabularx}
+
+\textit{How achieved}: Secrets stored in \texttt{.env} (gitignored). Docker containers use \texttt{read\_only: true} filesystem. Backend runs as \texttt{appuser} (non-root). \texttt{bandit} scans in CI detect hardcoded credentials. Database is not exposed to host network.
+
+\subsection*{3. Usability --- Accessibility}
+
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+\textbf{Source} & User who speaks Russian but cannot type quickly \\
+\textbf{Stimulus} & Sends a voice message instead of text \\
+\textbf{Environment} & Telegram mobile app \\
+\textbf{Artifact} & Voice recognition pipeline (Whisper STT) \\
+\textbf{Response} & Transcribe voice and process as text command \\
+\textbf{Measure} & Voice recognition accuracy $\geq$ 85\% for Russian speech \\
+\bottomrule
+\end{tabularx}
+
+\textit{How achieved}: \texttt{faster-whisper} with the \texttt{small} model supports both Russian and English. Voice messages are transcribed server-side and fed into the same message handler. The ``searching'' stage ensures voice input during \texttt{/search} is treated as a search query without LLM re-classification.
+
+\subsection*{4. Reliability --- Availability}
+
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+\textbf{Source} & System administrator \\
+\textbf{Stimulus} & Server reboots unexpectedly \\
+\textbf{Environment} & VPS with Docker \\
+\textbf{Artifact} & All Docker containers \\
+\textbf{Response} & Containers restart automatically \\
+\textbf{Measure} & Recovery time $\leq$ 60 seconds after reboot \\
+\bottomrule
+\end{tabularx}
+
+\textit{How achieved}: Docker Compose uses \texttt{restart: unless-stopped} for all services. PostgreSQL data is persisted in a named volume (\texttt{poetry\_pgdata}). \texttt{systemctl enable docker} ensures Docker starts on boot.
+
+% ==================== ARCHITECTURE ====================
+\section{Architecture Views}
+
+\subsection*{Static View: Component Diagram}
+
+\begin{lstlisting}[language={}]
++------------------+         +-------------------+
+|   Telegram API   |         |   OpenRouter API  |
++--------+---------+         +--------+----------+
+         |                            |
++--------v---------+         +--------v----------+
+|    Bot Container  |  HTTP   |  Backend Container|
+|  (python-telegram |-------->|   (FastAPI)       |
+|   -bot)           |         |                   |
++------------------+         +---+---+---+-------+
+                                 |   |   |
+                    +------------+   |   +----------+
+                    |                |              |
+             +------v-----+  +------v------+ +-----v------+
+             | PostgreSQL  |  | Whisper STT | | LLM Client |
+             |   (DB)      |  | (in-process)| | (OpenRouter)|
+             +-------------+  +-------------+ +------------+
+\end{lstlisting}
+
+\subsection*{Dynamic View: Voice Search Sequence}
+
+\begin{lstlisting}[language={}]
+User -> Telegram: sends voice message
+Telegram -> Bot: update with voice file_id
+Bot -> Telegram: download voice file
+Bot -> Backend: POST /voice (audio + telegram_id)
+Backend -> Whisper: transcribe audio
+Whisper --> Backend: transcribed text
+Backend -> Backend: check user stage ("searching")
+Backend -> Backend: extract_search_keywords(text)
+Backend -> Backend: search hardcoded + external poems
+Backend --> Bot: JSON {reply, suggested_replies}
+Bot -> Telegram: send formatted results
+Telegram -> User: display poem options
+\end{lstlisting}
+
+\subsection*{Deployment View}
+
+\begin{lstlisting}[language={}]
++------------------------------------------+
+|            VPS (Ubuntu 24.04)            |
+|  +------------------------------------+ |
+|  |         Docker Engine               | |
+|  |  +----------+ +----------+ +-----+ | |
+|  |  |   bot    | | backend  | |  db  | | |
+|  |  | :polling | |  :8000   | | :5432| | |
+|  |  +----+-----+ +----+-----+ +--+--+ | |
+|  |       |             |          |     | |
+|  |       +------+------+    +-----+     | |
+|  |              |            |          | |
+|  |        docker-network   pgdata vol  | |
+|  +------------------------------------+ |
++------------------------------------------+
+\end{lstlisting}
+
+% ==================== SECRETS ====================
+\section{Secrets Management}
+
+All secrets are managed via environment variables in \texttt{.env}:
+
+\begin{longtable}{p{4.5cm}p{1.5cm}p{8cm}}
+\toprule
+\textbf{Variable} & \textbf{Required} & \textbf{Description} \\
+\midrule
+TELEGRAM\_BOT\_TOKEN & Yes & Bot token from @BotFather \\
+OPENROUTER\_API\_KEY & Yes & API key for LLM features \\
+POSTGRES\_USER & Yes & Database username \\
+POSTGRES\_PASSWORD & Yes & Database password \\
+POSTGRES\_DB & Yes & Database name \\
+WHISPER\_MODEL & No & Whisper model size (default: small) \\
+LLM\_MODEL & No & LLM model ID \\
+\bottomrule
+\end{longtable}
+
+\textbf{Security practices}:
+\begin{itemize}
+    \item \texttt{.env} is in \texttt{.gitignore} --- never committed to Git.
+    \item \texttt{.env.example} contains only placeholder values.
+    \item Docker containers run as non-root (\texttt{appuser}).
+    \item Backend container uses \texttt{read\_only: true} with \texttt{tmpfs} mounts.
+    \item \texttt{bandit} scans in CI detect any hardcoded credentials.
+\end{itemize}
+
+% ==================== MVP V2 ====================
+\section{MVP v2 Deployment}
+
+MVP v2 is deployed on an Aeza VPS and includes:
+\begin{itemize}
+    \item Voice search with Whisper STT
+    \item LLM-powered intent classification and chat
+    \item Spaced repetition memorization (SM-2 algorithm)
+    \item Library with 25+ classic poems
+    \item PostgreSQL persistent storage
+\end{itemize}
+
+\textbf{Demo video}: \textit{[TODO: Add link to 2-min demo video]}
+
+% ==================== AI USAGE ====================
+\section{AI Usage Report}
+
+\begin{longtable}{p{4cm}p{10cm}}
+\toprule
+\textbf{Task} & \textbf{AI Contribution} \\
+\midrule
+Issue/PR templates & Generated templates based on best practices \\
+Unit tests & AI generated test structure; manually verified assertions \\
+Integration tests & AI generated API test scenarios \\
+CI pipeline & AI suggested mypy integration \\
+README & AI generated section structure; manually reviewed content \\
+Quality scenarios & AI helped format ISO 25010 scenarios; content based on actual architecture \\
+Architecture diagrams & AI generated ASCII diagrams from codebase analysis \\
+Report & AI generated LaTeX structure; content from actual project state \\
+\bottomrule
+\end{longtable}
+
+\end{document}
