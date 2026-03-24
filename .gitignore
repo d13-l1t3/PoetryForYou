@@ -25,3 +25,6 @@ __pycache__/
 # Server logs (may contain sensitive information)
 docker-logs.txt
 error-logs.txt
+
+# Homework reports (submitted separately)
+HW/
