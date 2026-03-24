@@ -2,7 +2,7 @@
 
 **Learn poems by heart with a Telegram bot — voice search, spaced repetition, and AI-powered recommendations.**
 
-🤖 [**Try the bot**](https://t.me/PoetryForYouBot) · 🎬 [**Demo video**](https://drive.google.com/file/d/1I6CT8h3qKArb7yuVnSOsOj9sokyPF17h/view?usp=drive_link) · 📋 [**Changelog**](CHANGELOG.md)
+🤖 [**Try the bot**](https://t.me/PoetryforYou_bot) · 🎬 [**Demo video**](https://drive.google.com/file/d/1I6CT8h3qKArb7yuVnSOsOj9sokyPF17h/view?usp=drive_link) · 📋 [**Changelog**](CHANGELOG.md)
 
 ---
 
@@ -70,7 +70,7 @@ PoetryForYou is a Telegram bot that helps users discover, learn, and memorize po
 
 ### Getting Started
 
-1. Open Telegram → find [@PoetryForYouBot](https://t.me/PoetryForYouBot)
+1. Open Telegram → find [@PoetryforYou_bot](https://t.me/PoetryforYou_bot)
 2. Send `/start` → choose language (`ru`, `en`, or `mix`)
 3. You're ready!
 

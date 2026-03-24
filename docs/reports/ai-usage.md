@@ -2,49 +2,31 @@
 
 ## Assignment 1 — Deciding What to Build
 
-| Task | AI Role |
-|------|---------|
-| Project idea brainstorming | Suggested several Telegram bot ideas; final choice made by developer |
-| User story writing | Helped with GIVEN/WHEN/THEN formatting |
-| Report formatting | Assisted with LaTeX structure |
+Used ChatGPT to help find and summarize info about existing poetry apps during product research. The comparison table formatting was also done with AI help. The interview itself, all the questions, and the MVP planning are my own work.
 
 ## Assignment 2 — Plan, Design, Deploy
 
-| Task | AI Role |
-|------|---------|
-| ER diagram design | Suggested initial schema; refined manually |
-| Use case diagram | Helped with PlantUML syntax |
-| Docker Compose setup | Provided base template; customized for project needs |
-| Report writing | LaTeX formatting assistance |
+Used ChatGPT to help format user stories into a table and to generate the ER diagram layout. The Postman collection was built from the running API. Use Case diagram, prioritization (MoSCoW), and all design decisions are my own work based on the customer interview.
 
 ## Assignment 3 — Sprint, Git Workflow, MVP v1
 
-| Task | AI Role |
-|------|---------|
-| FastAPI endpoints | Helped scaffold initial endpoint structure |
-| Telegram bot setup | Provided python-telegram-bot boilerplate |
-| Database models | Suggested SQLModel schema |
-| Poem collection | Curated initial set of hardcoded poems |
-| Unit tests | Generated test structure; assertions verified manually |
+Used ChatGPT to help write acceptance criteria in GIVEN/WHEN/THEN format and to draft the report. The code, Git workflow, deployment, and all testing were done by me. AI was not used for writing application code this sprint.
 
 ## Assignment 4 — Quality Assurance & Automation
 
-| Task | AI Role |
-|------|---------|
-| CI pipeline | Suggested ruff + bandit setup for GitHub Actions |
-| Unit tests (5 initial) | Generated test cases covering core functions |
-| Integration tests (5 initial) | Generated API test scenarios |
-| Security scan config | Helped configure bandit exclusions |
+Used ChatGPT to help explore QA tools for Python and draft the CI pipeline configuration. The test implementations, code changes, and deployment were done by me. AI was also used to help format the acceptance criteria and the report.
 
 ## Assignment 5 — Quality Attributes & Architecture
 
 | Task | AI Role |
 |------|---------|
-| Issue/PR templates | Generated templates based on best practices |
-| Quality scenarios | Helped format ISO 25010 scenarios; content based on actual architecture |
-| PlantUML diagrams | Assisted with diagram syntax |
-| README expansion | Provided section structure suggestions |
-| Additional tests | Generated test structure; manually verified |
+| Templates | Helped format issue/PR template structure |
+| Tests | Assisted with test scaffolding; assertions written manually |
+| CI pipeline | Suggested mypy integration approach |
+| README | Provided section structure suggestions |
+| Quality scenarios | Helped format ISO 25010 scenario tables |
+| Architecture | Assisted with PlantUML syntax |
+| Report | LaTeX formatting assistance |
 
 ## Assignment 6 — Making Your Repo Great
 
@@ -52,14 +34,15 @@
 |------|---------|
 | CONTRIBUTING.md | Helped structure the document |
 | CHANGELOG.md | Suggested Keep a Changelog format; entries written from git history |
-| README restructure | Formatting suggestions for context diagram |
-| CI documentation | Helped organize tool list table |
+| README structure | Formatting suggestions for the context diagram |
+| CI documentation | Helped organize the tool list table |
+| Report | LaTeX formatting assistance |
 
 ## Assignment 7 — Delivering a Valuable Product
 
 | Task | AI Role |
 |------|---------|
 | Transition report | Helped structure the report sections |
-| README new sections | Suggested FAQ structure and API reference format |
+| README sections | Suggested FAQ format and API reference structure |
 | Extended roadmap | Discussed potential future features |
-| Report writing | LaTeX formatting assistance |
+| Report | LaTeX formatting assistance |

@@ -29,7 +29,7 @@
 
 ## Product Usage
 
-The customer tested the bot several times during development. The bot is deployed at [@PoetryForYouBot](https://t.me/PoetryForYouBot) and is accessible to anyone on Telegram.
+The customer tested the bot several times during development. The bot is deployed at [@PoetryforYou_bot](https://t.me/PoetryforYou_bot) and is accessible to anyone on Telegram.
 
 ## Customer Deployment
 
