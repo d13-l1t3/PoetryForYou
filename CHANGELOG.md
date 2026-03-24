@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [0.3.0] — 2026-03-24 (MVP v2.5)
+## [0.3.0] — 2026-03-19 (MVP v2.5)
 
 ### Added
 - CONTRIBUTING.md with development guidelines
@@ -18,7 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - README fully restructured: header (logo, one-liner, links), body (goals, context, roadmap, usage), hyperlinks to all docs
 - Docs reorganized into required directory structure
 
-## [0.2.0] — 2026-03-22 (MVP v2)
+## [0.2.0] — 2026-03-15 (MVP v2)
 
 ### Added
 - Voice search with Whisper STT (speech-to-text)
@@ -45,7 +45,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 - README expanded with Architecture, Development, QA, Build/Deploy, Secrets sections
 
-## [0.1.0] — 2026-03-15 (MVP v1)
+## [0.1.0] — 2026-03-08 (MVP v1)
 
 ### Added
 - Telegram bot with `/start`, `/library`, `/learn`, `/review`, `/help` commands
@@ -59,7 +59,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - CI pipeline with `ruff` linting, `bandit` security scan, `pytest` tests
 - FastAPI backend with `/message`, `/voice`, `/health` endpoints
 
-## [0.0.1] — 2026-03-08 (MVP v0)
+## [0.0.1] — 2026-03-01 (MVP v0)
 
 ### Added
 - Project skeleton with Docker Compose

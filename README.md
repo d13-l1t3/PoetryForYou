@@ -23,7 +23,6 @@ PoetryForYou is a Telegram bot that helps users discover, learn, and memorize po
 ```
                     ┌─────────────┐
                     │  Customer   │
-                    │ (Nursultan) │
                     └──────┬──────┘
                            │ feedback & acceptance
                            ▼
@@ -177,6 +176,76 @@ systemctl enable docker
 ├── CHANGELOG.md
 └── LICENSE
 ```
+
+---
+
+## FAQ (for customer)
+
+*This section was added at the customer's request to help with common questions and troubleshooting.*
+
+**Q: How do I change the bot's language?**
+A: Send `/start` again and pick a new language (ru, en, or mix).
+
+**Q: The bot doesn't respond to voice messages**
+A: Make sure the Whisper model has finished downloading (check logs with `docker compose logs backend`). First voice message may take longer while the model loads.
+
+**Q: How do I add new poems?**
+A: Add poems to the `POEMS` list in `backend/app/poem_source.py` and redeploy. Each poem needs a `title`, `author`, and `text` field.
+
+**Q: How do I update the bot?**
+A: On the server: `cd ~/PoetryForYou && git pull && docker compose up --build -d`
+
+**Q: The bot shows an error after voice message**
+A: Check that the backend container has enough memory (min 2 GB RAM) and the `/home/appuser/.cache` tmpfs mount is configured in `docker-compose.yml`.
+
+**Q: How do I see my learning stats?**
+A: Send `/progress` to see poems learned, points earned, and review schedule.
+
+---
+
+## API Reference (for customer)
+
+*This section was added at the customer's request to document the backend API for potential integrations.*
+
+### `POST /message`
+
+Process a text message from the user.
+
+```json
+// Request
+{"telegram_id": 123456, "text": "/start"}
+
+// Response
+{
+  "reply": {"text": "Welcome!", "suggested_replies": ["ru", "en", "mix"]},
+  "intent": "onboarding",
+  "stage": "onboarding"
+}
+```
+
+### `POST /voice`
+
+Process a voice message (multipart form upload).
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `telegram_id` | string | User's Telegram ID |
+| `audio` | file | Audio file (.ogg, .m4a) |
+
+### `GET /health`
+
+Health check endpoint. Returns `{"ok": true}`.
+
+### `POST /cleanup`
+
+Clean up expired sessions. Returns `{"cleaned_up": N}`.
+
+---
+
+## Reports
+
+- [Transition Report](docs/reports/transition-report.md)
+- [AI Usage Report](docs/reports/ai-usage.md)
 
 ## License
 
