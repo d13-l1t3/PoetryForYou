@@ -1,0 +1,52 @@
+@startuml component-diagram
+
+title PoetryForYou — Component Diagram
+
+skinparam componentStyle uml2
+
+package "Telegram" {
+    [Telegram API] as TG
+}
+
+package "Bot Container" {
+    [Bot\n(python-telegram-bot)] as BOT
+    note right of BOT
+        Handles Telegram updates,
+        downloads voice files,
+        forwards to Backend
+    end note
+}
+
+package "Backend Container" {
+    [FastAPI App\n(main.py)] as API
+    [Message Handler\n(service_enhanced.py)] as SVC
+    [Poem Source\n(poem_source.py)] as POEMS
+    [LLM Client\n(llm.py)] as LLM
+    [Whisper STT\n(stt.py)] as STT
+    [i18n\n(i18n.py)] as I18N
+    [Library Service\n(library_service.py)] as LIB
+
+    API --> SVC : handle_message()
+    SVC --> POEMS : search / fetch
+    SVC --> LLM : classify intent
+    SVC --> I18N : translate
+    SVC --> LIB : browse library
+    API --> STT : transcribe voice
+}
+
+database "PostgreSQL" {
+    [Users, Poems,\nProgress, Sessions] as DB
+}
+
+cloud "External APIs" {
+    [OpenRouter\n(LLM)] as OR
+    [rupoem.ru\nstihi.ru] as EXT
+}
+
+TG <--> BOT : polling
+BOT --> API : HTTP POST\n/message, /voice
+SVC --> DB : SQLModel ORM
+LLM --> OR : OpenAI SDK
+POEMS --> EXT : HTTP scraping
+
+@enduml

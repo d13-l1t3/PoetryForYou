@@ -1,0 +1,42 @@
+@startuml voice-search-sequence
+
+title Voice Search — Sequence Diagram
+
+actor User
+participant "Telegram" as TG
+participant "Bot" as BOT
+participant "Backend\n/voice" as API
+participant "Whisper STT" as STT
+participant "LLM\n(extract keywords)" as LLM
+participant "Poem Source" as PS
+database "PostgreSQL" as DB
+
+User -> TG : sends voice message
+TG -> BOT : Update(voice file_id)
+BOT -> TG : download voice file
+TG --> BOT : audio bytes (.ogg)
+
+BOT -> API : POST /voice\n(audio + telegram_id)
+
+API -> STT : transcribe_audio(audio)
+STT --> API : "Пушкин У лукоморья"
+
+API -> DB : get user by telegram_id
+DB --> API : User(stage="searching")
+
+note over API : stage == "searching"\nskip LLM classification\ntreat text as search query
+
+API -> LLM : extract_search_keywords(text)
+LLM --> API : "Пушкин лукоморья"
+
+API -> PS : fetch_poems_for_user(keywords)
+PS -> PS : search hardcoded poems\n(score: title > author > text)
+PS --> API : [ExternalPoem, ...]
+
+API -> DB : user.stage = "choosing_poem"
+API --> BOT : JSON {reply, suggested_replies}
+
+BOT -> TG : send message\n"Found poems: 1. У лукоморья..."
+TG -> User : display results
+
+@enduml

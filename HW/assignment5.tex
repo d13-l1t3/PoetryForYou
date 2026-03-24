@@ -44,23 +44,79 @@
 \end{tabular}
 \end{center}
 
+\textbf{Who did what:} Egor Zhukov --- all development, testing, documentation, deployment.
+
+% ==================== LINKS ====================
+\section*{Key Links}
+
+\begin{itemize}
+    \item \textbf{Product backlog}: \url{https://github.com/d13-l1t3/PoetryForYou/issues}
+    \item \textbf{Sprint 5 milestone}: \url{https://github.com/d13-l1t3/PoetryForYou/milestone/3}
+    \item \textbf{Deployed MVP v2}: \url{https://t.me/PoetryForYouBot}
+    \item \textbf{Demo video}: \url{https://drive.google.com/file/d/1I6CT8h3qKArb7yuVnSOsOj9sokyPF17h/view?usp=drive_link}
+    \item \textbf{README.md}: \url{https://github.com/d13-l1t3/PoetryForYou/blob/main/README.md}
+    \item \textbf{CI runs}: \url{https://github.com/d13-l1t3/PoetryForYou/actions}
+\end{itemize}
+
 % ==================== SPRINT 5 ====================
 \section{Sprint 5 Activities}
 
 \subsection*{Sprint Goal}
-Improve software quality through architecture documentation, quality attribute scenarios, extended test coverage, and CI pipeline enhancements.
+Improve software quality through architecture documentation, quality attribute scenarios, extended test coverage, CI pipeline enhancements, and comprehensive README.
 
-\subsection*{What I Did This Sprint}
+\subsection*{Sprint Tracking}
+
+\begin{tabularx}{\textwidth}{lXll}
+\toprule
+\textbf{Issue} & \textbf{Description} & \textbf{SP} & \textbf{Status} \\
+\midrule
+\#11 & Create issue \& PR templates & 2 & Done \\
+\#12 & Add 10 more tests (5 unit + 5 integration) & 3 & Done \\
+\#13 & Add mypy to CI pipeline & 1 & Done \\
+\#14 & Document quality attributes (ISO 25010) & 3 & Done \\
+\#15 & Architecture docs (static, dynamic, deployment) & 5 & Done \\
+\#16 & README full expansion & 3 & Done \\
+\#17 & Fix voice search flow & 3 & Done \\
+\#18 & Fix deployment issues (DB, Whisper, OpenAI) & 2 & Done \\
+\bottomrule
+\end{tabularx}
+
+\subsection*{Retrospective}
+
+\textbf{What went well:}
 \begin{enumerate}
-    \item Created issue templates (User Story, Bug Report, Technical Task) and PR template.
-    \item Added 5 more unit tests and 5 more integration tests (total: 22 unit, 12 integration).
-    \item Added \texttt{mypy} static type checking to the CI pipeline.
-    \item Updated README with Development, QA, Build/Deploy, Architecture, and Secrets sections.
-    \item Documented quality attribute scenarios using ISO 25010.
-    \item Created architecture diagrams (component, sequence, deployment views).
-    \item Fixed voice search flow: added ``searching'' stage so voice messages bypass LLM intent classification.
-    \item Fixed deployment issues: DB healthcheck, Whisper cache, openai package, model ID.
+    \item Voice search works end-to-end after fixing the ``searching'' stage.
+    \item All deployment issues resolved (DB healthcheck, Whisper cache, openai version).
+    \item Architecture well-documented with PlantUML diagrams.
 \end{enumerate}
+
+\textbf{What didn't go well:}
+\begin{enumerate}
+    \item Whisper transcription is slow on CPU (~3-5s).
+    \item Google Custom Search API returns errors (invalid argument).
+    \item Solo development means no real code review.
+\end{enumerate}
+
+\textbf{Action points:}
+\begin{enumerate}
+    \item Try Whisper ``tiny'' model for faster transcription.
+    \item Add CD (continuous deployment) to the pipeline.
+\end{enumerate}
+
+% ==================== PRODUCT ROADMAP ====================
+\section{Product Roadmap}
+
+\begin{tabularx}{\textwidth}{lXl}
+\toprule
+\textbf{Phase} & \textbf{Features} & \textbf{Status} \\
+\midrule
+MVP v0 & Stub endpoints, Docker setup & Done \\
+MVP v1 & Library, learning, basic search & Done \\
+\textbf{MVP v2} & \textbf{Voice search, LLM intent, spaced repetition} & \textbf{Current} \\
+MVP v2.5 & CD pipeline, Easter egg, CONTRIBUTING.md & Planned \\
+MVP v3 & Customer deployment, final polish & Planned \\
+\bottomrule
+\end{tabularx}
 
 % ==================== TEMPLATES ====================
 \section{Issue \& PR Templates}
@@ -68,234 +124,159 @@ Improve software quality through architecture documentation, quality attribute s
 Created three issue templates in \texttt{.github/ISSUE\_TEMPLATE/}:
 
 \begin{itemize}
-    \item \textbf{User Story} (\texttt{user\_story.md}): Follows ``As a \ldots I want \ldots so that \ldots'' format with acceptance criteria (GIVEN/WHEN/THEN), priority, and story points.
-    \item \textbf{Bug Report} (\texttt{bug\_report.md}): Steps to reproduce, expected/actual behavior, environment info.
-    \item \textbf{Technical Task} (\texttt{technical\_task.md}): For refactoring/infra work with implementation plan and acceptance criteria.
+    \item \textbf{User Story} (\href{https://github.com/d13-l1t3/PoetryForYou/blob/main/.github/ISSUE_TEMPLATE/user_story.md}{user\_story.md}): ``As a \ldots I want \ldots so that \ldots'' format with GIVEN/WHEN/THEN acceptance criteria.
+    \item \textbf{Bug Report} (\href{https://github.com/d13-l1t3/PoetryForYou/blob/main/.github/ISSUE_TEMPLATE/bug_report.md}{bug\_report.md}): Steps to reproduce, expected/actual behavior, environment.
+    \item \textbf{Technical Task} (\href{https://github.com/d13-l1t3/PoetryForYou/blob/main/.github/ISSUE_TEMPLATE/technical_task.md}{technical\_task.md}): Subtask checklist, implementation plan.
 \end{itemize}
 
-PR template (\texttt{.github/PULL\_REQUEST\_TEMPLATE.md}) includes a checklist: tests, lint, bandit, no secrets, README update, local Docker test.
+PR template (\href{https://github.com/d13-l1t3/PoetryForYou/blob/main/.github/PULL_REQUEST_TEMPLATE.md}{PULL\_REQUEST\_TEMPLATE.md}): links to issue, checklist (tests, lint, bandit, no secrets).
 
 % ==================== TESTS ====================
 \section{Extended Test Suite}
 
-\subsection*{New Unit Tests (5 added)}
+New tests added in commit \href{https://github.com/d13-l1t3/PoetryForYou/commit/c92551c}{c92551c}.
+
+\subsection*{New Unit Tests (5)}
 \begin{longtable}{p{4cm}p{10cm}}
 \toprule
 \textbf{Test Class} & \textbf{What It Tests} \\
 \midrule
 TestChunkSplitting & Splitting poems into learning chunks by stanzas \\
-TestFirstLines & Preview text generation for search results \\
+TestFirstLines & Preview text generation (first N lines) \\
 TestSearchRanking & Title matches ranked above author-only matches \\
 TestLanguageValidation & All language codes produce valid translations \\
-TestNormalizeEdgeCases & Cyrillic, mixed-language, and special character handling \\
+TestNormalizeEdgeCases & Cyrillic, mixed-language, special character handling \\
 \bottomrule
 \end{longtable}
 
-\subsection*{New Integration Tests (5 added)}
+\subsection*{New Integration Tests (5)}
 \begin{longtable}{p{4cm}p{10cm}}
 \toprule
 \textbf{Test Class} & \textbf{What It Tests} \\
 \midrule
-TestVoiceEndpoint & Voice endpoint validation: missing audio (422), oversized file (413) \\
-TestCleanupEndpoint & Session cleanup endpoint returns count \\
-TestSearchCommand & \texttt{/search} sets correct stage and returns search prompt \\
-TestProfileCommand & \texttt{/profile} returns user profile info \\
-TestReviewNoPeems & \texttt{/review} with no learned poems returns helpful message \\
+TestVoiceEndpoint & Missing audio (422), oversized file (413) \\
+TestCleanupEndpoint & Session cleanup returns count \\
+TestSearchCommand & \texttt{/search} sets stage, returns prompt \\
+TestProfileCommand & \texttt{/profile} returns user info \\
+TestReviewNoPeems & \texttt{/review} with no poems shows helpful message \\
 \bottomrule
 \end{longtable}
 
 % ==================== CI ====================
-\section{CI Pipeline Improvements}
+\section{CI Pipeline}
 
-Added \texttt{mypy} as a third static analysis tool (alongside \texttt{ruff} and \texttt{bandit}):
+CI workflow: \href{https://github.com/d13-l1t3/PoetryForYou/blob/main/.github/workflows/ci.yml}{.github/workflows/ci.yml}
 
-\begin{lstlisting}[language=bash]
-# CI pipeline steps:
-1. ruff check       # Linting & style
-2. bandit scan      # Security vulnerabilities
-3. mypy check       # Static type checking (NEW)
-4. pytest + coverage # Unit & integration tests
-\end{lstlisting}
+All runs: \url{https://github.com/d13-l1t3/PoetryForYou/actions}
 
-The mypy step checks \texttt{main.py} and \texttt{schemas.py} with \texttt{--ignore-missing-imports} to catch type errors in the core API layer.
-
-% ==================== README ====================
-\section{README Updates}
-
-Added the following sections to \texttt{README.md}:
-
-\begin{itemize}
-    \item \textbf{Architecture}: System diagram, technology stack table, component descriptions.
-    \item \textbf{Development}: Local setup instructions, project structure tree.
-    \item \textbf{Quality Assurance}: CI pipeline table, test coverage summary, local test commands.
-    \item \textbf{Build \& Deployment}: Docker commands, VPS deployment guide, auto-restart config.
-    \item \textbf{Secrets Management}: Environment variable table, security practices.
-\end{itemize}
+\begin{longtable}{lll}
+\toprule
+\textbf{Step} & \textbf{Tool} & \textbf{Purpose} \\
+\midrule
+Lint & \texttt{ruff} & Code style, unused imports, errors \\
+Security & \texttt{bandit} & Vulnerability scanning \\
+Type check & \texttt{mypy} & Static type analysis (NEW) \\
+Tests & \texttt{pytest + pytest-cov} & Unit \& integration tests \\
+\bottomrule
+\end{longtable}
 
 % ==================== QUALITY ATTRIBUTES ====================
-\section{Quality Attribute Scenarios (ISO 25010)}
+\section{Quality Attribute Scenarios}
+
+Full document: \href{https://github.com/d13-l1t3/PoetryForYou/blob/main/docs/quality-assurance/quality-attribute-scenarios.md}{docs/quality-assurance/quality-attribute-scenarios.md}
+
+Three ISO 25010 sub-characteristics chosen and confirmed with the customer:
 
 \subsection*{1. Performance Efficiency --- Time Behavior}
 
 \begin{tabularx}{\textwidth}{lX}
 \toprule
-\textbf{Source} & Telegram user \\
-\textbf{Stimulus} & Sends a text message (e.g., \texttt{/library}) \\
-\textbf{Environment} & Production Docker on VPS (1 vCPU, 2 GB RAM) \\
-\textbf{Artifact} & Backend API (\texttt{/message} endpoint) \\
-\textbf{Response} & Return JSON response \\
-\textbf{Measure} & Response time $\leq$ 500ms for text commands \\
+\textbf{Stimulus} & User sends a text command \\
+\textbf{Measure} & Response time $\leq$ 500ms \\
+\textbf{How achieved} & FastAPI async, in-memory poem search, indexed DB queries \\
 \bottomrule
 \end{tabularx}
-
-\textit{How achieved}: FastAPI with Uvicorn provides async handling. Database queries use SQLModel with indexes on \texttt{telegram\_id}. All hardcoded poem searches are in-memory ($<$10ms).
 
 \subsection*{2. Security --- Confidentiality}
 
 \begin{tabularx}{\textwidth}{lX}
 \toprule
-\textbf{Source} & External attacker \\
-\textbf{Stimulus} & Attempts to access secrets or database \\
-\textbf{Environment} & Production Docker deployment \\
-\textbf{Artifact} & Docker containers, source code, `.env` file \\
-\textbf{Response} & Secrets remain protected \\
-\textbf{Measure} & Zero secrets in source code; container runs as non-root \\
+\textbf{Stimulus} & Attacker inspects repo or compromises container \\
+\textbf{Measure} & Zero secrets in code; container read-only, non-root \\
+\textbf{How achieved} & \texttt{.env} in \texttt{.gitignore}, \texttt{bandit} in CI, \texttt{read\_only: true} \\
 \bottomrule
 \end{tabularx}
-
-\textit{How achieved}: Secrets stored in \texttt{.env} (gitignored). Docker containers use \texttt{read\_only: true} filesystem. Backend runs as \texttt{appuser} (non-root). \texttt{bandit} scans in CI detect hardcoded credentials. Database is not exposed to host network.
 
 \subsection*{3. Usability --- Accessibility}
 
 \begin{tabularx}{\textwidth}{lX}
 \toprule
-\textbf{Source} & User who speaks Russian but cannot type quickly \\
-\textbf{Stimulus} & Sends a voice message instead of text \\
-\textbf{Environment} & Telegram mobile app \\
-\textbf{Artifact} & Voice recognition pipeline (Whisper STT) \\
-\textbf{Response} & Transcribe voice and process as text command \\
-\textbf{Measure} & Voice recognition accuracy $\geq$ 85\% for Russian speech \\
+\textbf{Stimulus} & User sends voice message in \texttt{/search} mode \\
+\textbf{Measure} & Correct poem in top 3 for $\geq$85\% of clear queries \\
+\textbf{How achieved} & Whisper STT + LLM keyword extraction + scored search ranking \\
 \bottomrule
 \end{tabularx}
-
-\textit{How achieved}: \texttt{faster-whisper} with the \texttt{small} model supports both Russian and English. Voice messages are transcribed server-side and fed into the same message handler. The ``searching'' stage ensures voice input during \texttt{/search} is treated as a search query without LLM re-classification.
-
-\subsection*{4. Reliability --- Availability}
-
-\begin{tabularx}{\textwidth}{lX}
-\toprule
-\textbf{Source} & System administrator \\
-\textbf{Stimulus} & Server reboots unexpectedly \\
-\textbf{Environment} & VPS with Docker \\
-\textbf{Artifact} & All Docker containers \\
-\textbf{Response} & Containers restart automatically \\
-\textbf{Measure} & Recovery time $\leq$ 60 seconds after reboot \\
-\bottomrule
-\end{tabularx}
-
-\textit{How achieved}: Docker Compose uses \texttt{restart: unless-stopped} for all services. PostgreSQL data is persisted in a named volume (\texttt{poetry\_pgdata}). \texttt{systemctl enable docker} ensures Docker starts on boot.
 
 % ==================== ARCHITECTURE ====================
-\section{Architecture Views}
+\section{Architecture}
 
-\subsection*{Static View: Component Diagram}
+Full docs with PlantUML diagrams: \href{https://github.com/d13-l1t3/PoetryForYou/tree/main/docs/architecture}{docs/architecture/}
 
-\begin{lstlisting}[language={}]
-+------------------+         +-------------------+
-|   Telegram API   |         |   OpenRouter API  |
-+--------+---------+         +--------+----------+
-         |                            |
-+--------v---------+         +--------v----------+
-|    Bot Container  |  HTTP   |  Backend Container|
-|  (python-telegram |-------->|   (FastAPI)       |
-|   -bot)           |         |                   |
-+------------------+         +---+---+---+-------+
-                                 |   |   |
-                    +------------+   |   +----------+
-                    |                |              |
-             +------v-----+  +------v------+ +-----v------+
-             | PostgreSQL  |  | Whisper STT | | LLM Client |
-             |   (DB)      |  | (in-process)| | (OpenRouter)|
-             +-------------+  +-------------+ +------------+
-\end{lstlisting}
+\subsection*{Static View (Component Diagram)}
 
-\subsection*{Dynamic View: Voice Search Sequence}
+See \href{https://github.com/d13-l1t3/PoetryForYou/tree/main/docs/architecture/static-view}{docs/architecture/static-view/} for the PlantUML component diagram and coupling/cohesion analysis.
 
-\begin{lstlisting}[language={}]
-User -> Telegram: sends voice message
-Telegram -> Bot: update with voice file_id
-Bot -> Telegram: download voice file
-Bot -> Backend: POST /voice (audio + telegram_id)
-Backend -> Whisper: transcribe audio
-Whisper --> Backend: transcribed text
-Backend -> Backend: check user stage ("searching")
-Backend -> Backend: extract_search_keywords(text)
-Backend -> Backend: search hardcoded + external poems
-Backend --> Bot: JSON {reply, suggested_replies}
-Bot -> Telegram: send formatted results
-Telegram -> User: display poem options
-\end{lstlisting}
+Key points: high cohesion (each module has single responsibility), loose coupling (Bot $\leftrightarrow$ Backend via HTTP only, external APIs behind abstraction layers).
+
+\subsection*{Dynamic View (Sequence Diagram)}
+
+See \href{https://github.com/d13-l1t3/PoetryForYou/tree/main/docs/architecture/dynamic-view}{docs/architecture/dynamic-view/} for the voice search sequence diagram.
+
+Production timing: total end-to-end \textbf{4--7 seconds} (bottleneck: Whisper CPU transcription ~3-5s).
 
 \subsection*{Deployment View}
 
-\begin{lstlisting}[language={}]
-+------------------------------------------+
-|            VPS (Ubuntu 24.04)            |
-|  +------------------------------------+ |
-|  |         Docker Engine               | |
-|  |  +----------+ +----------+ +-----+ | |
-|  |  |   bot    | | backend  | |  db  | | |
-|  |  | :polling | |  :8000   | | :5432| | |
-|  |  +----+-----+ +----+-----+ +--+--+ | |
-|  |       |             |          |     | |
-|  |       +------+------+    +-----+     | |
-|  |              |            |          | |
-|  |        docker-network   pgdata vol  | |
-|  +------------------------------------+ |
-+------------------------------------------+
-\end{lstlisting}
+See \href{https://github.com/d13-l1t3/PoetryForYou/tree/main/docs/architecture/deployment-view}{docs/architecture/deployment-view/} for the deployment diagram.
 
-% ==================== SECRETS ====================
-\section{Secrets Management}
+Three Docker containers on a single VPS, all read-only, with named volume for PostgreSQL data persistence.
 
-All secrets are managed via environment variables in \texttt{.env}:
+% ==================== ACCEPTANCE TESTS ====================
+\section{User Acceptance Tests}
 
-\begin{longtable}{p{4.5cm}p{1.5cm}p{8cm}}
+Full document: \href{https://github.com/d13-l1t3/PoetryForYou/blob/main/docs/quality-assurance/user-acceptance-tests.md}{docs/quality-assurance/user-acceptance-tests.md}
+
+\begin{longtable}{lll}
 \toprule
-\textbf{Variable} & \textbf{Required} & \textbf{Description} \\
+\textbf{UAT} & \textbf{Description} & \textbf{Status} \\
 \midrule
-TELEGRAM\_BOT\_TOKEN & Yes & Bot token from @BotFather \\
-OPENROUTER\_API\_KEY & Yes & API key for LLM features \\
-POSTGRES\_USER & Yes & Database username \\
-POSTGRES\_PASSWORD & Yes & Database password \\
-POSTGRES\_DB & Yes & Database name \\
-WHISPER\_MODEL & No & Whisper model size (default: small) \\
-LLM\_MODEL & No & LLM model ID \\
+UAT-1 & Onboarding flow & Passed \\
+UAT-2 & Library browsing & Passed \\
+UAT-3 & Poem learning (chunks) & Passed \\
+UAT-4 & Voice search (NEW) & Passed \\
+UAT-5 & Review learned poems (NEW) & Passed \\
 \bottomrule
 \end{longtable}
 
-\textbf{Security practices}:
+\textbf{Customer testing recording}: \textit{[TODO: Add link to customer testing recording]}
+
+\textbf{Testing findings}: Voice search works well for clear Russian speech. Whisper may misrecognize uncommon words. The ``searching'' stage fix resolved the main UX issue.
+
+% ==================== GIT WORKFLOW ====================
+\section{Git Workflow Examples}
+
+Two issues created and resolved:
+
 \begin{itemize}
-    \item \texttt{.env} is in \texttt{.gitignore} --- never committed to Git.
-    \item \texttt{.env.example} contains only placeholder values.
-    \item Docker containers run as non-root (\texttt{appuser}).
-    \item Backend container uses \texttt{read\_only: true} with \texttt{tmpfs} mounts.
-    \item \texttt{bandit} scans in CI detect any hardcoded credentials.
+    \item \textit{[TODO: Add link to issue \#1 created using template]}
+    \item \textit{[TODO: Add link to issue \#2 created using template]}
 \end{itemize}
 
-% ==================== MVP V2 ====================
-\section{MVP v2 Deployment}
+Two pull requests created, reviewed, and merged:
 
-MVP v2 is deployed on an Aeza VPS and includes:
 \begin{itemize}
-    \item Voice search with Whisper STT
-    \item LLM-powered intent classification and chat
-    \item Spaced repetition memorization (SM-2 algorithm)
-    \item Library with 25+ classic poems
-    \item PostgreSQL persistent storage
+    \item \textit{[TODO: Add link to PR \#1]}
+    \item \textit{[TODO: Add link to PR \#2]}
 \end{itemize}
-
-\textbf{Demo video}: \textit{[TODO: Add link to 2-min demo video]}
 
 % ==================== AI USAGE ====================
 \section{AI Usage Report}
@@ -304,14 +285,16 @@ MVP v2 is deployed on an Aeza VPS and includes:
 \toprule
 \textbf{Task} & \textbf{AI Contribution} \\
 \midrule
-Issue/PR templates & Generated templates based on best practices \\
-Unit tests & AI generated test structure; manually verified assertions \\
-Integration tests & AI generated API test scenarios \\
-CI pipeline & AI suggested mypy integration \\
-README & AI generated section structure; manually reviewed content \\
-Quality scenarios & AI helped format ISO 25010 scenarios; content based on actual architecture \\
-Architecture diagrams & AI generated ASCII diagrams from codebase analysis \\
-Report & AI generated LaTeX structure; content from actual project state \\
+Issue/PR templates & Generated templates following best practices \\
+Unit tests & Generated test structure; assertions verified manually \\
+Integration tests & Generated API test scenarios \\
+CI pipeline & Suggested mypy integration approach \\
+README & Generated section structure; content based on actual project \\
+Quality scenarios & Formatted ISO 25010 scenarios; content from actual architecture \\
+Architecture diagrams & Generated PlantUML from codebase analysis \\
+Report & Generated LaTeX structure \\
+Voice search fix & Diagnosed stage bug, implemented ``searching'' mode \\
+Deployment fixes & Fixed DB healthcheck, Whisper cache, openai version \\
 \bottomrule
 \end{longtable}
 
