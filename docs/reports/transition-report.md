@@ -1,12 +1,4 @@
-# Transition Report
-
-## Meeting Details
-
-- **Date**: March 24, 2026
-- **Participants**: Egor Zhukov (developer), Nursultan Askarbekuly (customer)
-- **Recording**: [TODO: Add meeting recording link]
-
----
+# Product Transition Report
 
 ## Product Completeness
 
@@ -27,13 +19,13 @@
 - Progress leaderboard between users
 - Poem of the day notifications
 
-## Product Usage
+## Product Availability
 
-The customer tested the bot several times during development. The bot is deployed at [@PoetryforYou_bot](https://t.me/PoetryforYou_bot) and is accessible to anyone on Telegram.
+The bot is deployed at [@PoetryforYou_bot](https://t.me/PoetryforYou_bot) and is accessible to anyone on Telegram.
 
-## Customer Deployment
+## Deployment
 
-The product runs on a VPS (Aeza, Ubuntu 24.04). Deployment instructions are documented in the [README](../../README.md). The customer can deploy independently using:
+The product runs on a VPS (Aeza, Ubuntu 24.04). Deployment instructions are documented in the [README](../../README.md). It can be deployed independently on any server using:
 
 ```bash
 git clone https://github.com/d13-l1t3/PoetryForYou.git
@@ -50,22 +42,15 @@ docker compose up --build -d
 4. Architecture is documented with PlantUML diagrams
 5. Tests (22 unit + 12 integration) ensure code quality
 
-## Customer Plans
+## Future Plans
 
-The customer may continue using the bot for personal poetry learning. The project could be extended by future students or contributors. Key extension points:
+The project can be extended by future contributors. Key extension points:
 - Adding new poem sources in `poem_source.py`
 - Adding new languages in `i18n.py`
 - Adding new commands in `service_enhanced.py`
 
-## Increasing Usefulness After Delivery
+## Added README Sections
 
-1. Add more poems to the hardcoded collection
-2. Fix Google Custom Search for external poem discovery
-3. Add CD pipeline for automatic deployment on push
-4. Implement leaderboard for gamification
-
-## README Feedback
-
-The customer reviewed the README and found it clear and comprehensive. Two additional sections were requested:
+Two additional README sections were added to improve usability:
 1. **FAQ (for customer)** — common questions and troubleshooting
 2. **API Reference (for customer)** — backend endpoint documentation for integration
