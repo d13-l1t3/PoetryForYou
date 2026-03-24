@@ -111,6 +111,15 @@ class UserPreferences(SQLModel, table=True):
 
 def create_db_and_tables() -> None:
     SQLModel.metadata.create_all(engine)
+    # Auto-migrate: add columns that may not exist in older schemas
+    from sqlalchemy import text as sa_text, inspect as sa_inspect
+    with engine.connect() as conn:
+        inspector = sa_inspect(engine)
+        if inspector.has_table("poem"):
+            columns = [c["name"] for c in inspector.get_columns("poem")]
+            if "audio_url" not in columns:
+                conn.execute(sa_text("ALTER TABLE poem ADD COLUMN audio_url TEXT DEFAULT ''"))
+                conn.commit()
 
 
 def get_session() -> Session:

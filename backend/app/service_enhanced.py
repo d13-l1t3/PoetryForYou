@@ -807,7 +807,7 @@ def handle_message(
             session.add(user)
             session.commit()
             
-            library = get_library_service(session)
+            library = get_library_service(session, user.language_pref)
             result = library.get_main_menu()
             return _make_library_response(result)
         
@@ -979,7 +979,7 @@ def handle_message(
     # === LIBRARY NAVIGATION ===
     # Check raw text for emoji buttons (not normalized, emojis removed in normalize)
     if user.stage.startswith("library") or raw.startswith(("📝", "🎭", "⭐", "📖", "👤", "📜", "⬅️", "🔍")):
-        library = get_library_service(session)
+        library = get_library_service(session, user.language_pref)
         action = library.parse_library_selection(raw)
         
         if action:
@@ -1193,7 +1193,7 @@ def handle_message(
         session.add(user)
         session.commit()
         
-        library = get_library_service(session)
+        library = get_library_service(session, user.language_pref)
         result = library.get_main_menu()
         return _make_library_response(result)
     
