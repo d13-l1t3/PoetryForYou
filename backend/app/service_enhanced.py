@@ -77,8 +77,11 @@ def _make_hint(chunk: str, level: int) -> str:
     
     Each word is wrapped individually in <tg-spoiler> so the user
     can tap specific words to reveal them.  Punctuation stays visible.
+    A zero-width space separates spoiler blocks to prevent Telegram
+    from merging adjacent spoilers into one.
     """
     import re
+    ZWS = "\u200B"  # zero-width space to separate spoiler blocks
     lines = chunk.split('\n')
     result_lines = []
     for line in lines:
@@ -91,7 +94,8 @@ def _make_hint(chunk: str, level: int) -> str:
                 out.append(f"<tg-spoiler>{token}</tg-spoiler>")
             else:
                 out.append(token)
-        result_lines.append(' '.join(out))
+        # Join with ZWS+space so Telegram doesn't merge spoiler blocks
+        result_lines.append(f' {ZWS}'.join(out))
     return '\n'.join(result_lines)
 
 
