@@ -238,3 +238,36 @@ class TestNormalizeEdgeCases:
         assert "«" not in result
         assert "»" not in result
         assert "!" not in result
+
+
+# ─────────── Test 11: Progressive Hints ─────────── #
+
+class TestMakeHint:
+    def test_level3_returns_full(self):
+        from app.service_enhanced import _make_hint
+        chunk = "Мороз и солнце; день чудесный!"
+        assert _make_hint(chunk, 3) == chunk
+
+    def test_level1_hides_most(self):
+        from app.service_enhanced import _make_hint
+        result = _make_hint("Мороз и солнце день чудесный", 1)
+        assert "___" in result
+        assert result.startswith("Мороз")  # First word always visible
+
+    def test_level2_hides_some(self):
+        from app.service_enhanced import _make_hint
+        result = _make_hint("Мороз и солнце день чудесный", 2)
+        assert "___" in result
+        assert result.startswith("Мороз")
+
+
+# ─────────── Test 12: Score Answer ignores punctuation ─────────── #
+
+class TestScorePunctuation:
+    def test_same_text_with_and_without_punctuation(self):
+        from app.service_enhanced import _score_answer
+        expected = "Мороз и солнце; день чудесный!"
+        answer = "мороз и солнце день чудесный"
+        score = _score_answer(expected, answer)
+        assert score >= 0.9  # Should be near-perfect match
+

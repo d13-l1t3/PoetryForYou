@@ -22,6 +22,7 @@ class ActivePoemSession:
     current_chunk_index: int = 0
     last_accessed: float = field(default_factory=time.time)
     learned_chunks: List[int] = field(default_factory=list)  # Indices of chunks user has seen
+    hint_count: int = 0  # Progressive hint level for current chunk
     
     def touch(self) -> None:
         """Update last accessed time."""

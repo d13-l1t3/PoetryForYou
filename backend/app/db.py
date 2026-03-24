@@ -45,6 +45,7 @@ class Poem(SQLModel, table=True):
     text: str
     tags: str = ""  # comma-separated for MVP
     difficulty: int = 2  # 1..5
+    audio_url: str = ""  # URL to professional reading
 
 
 class LearningItem(SQLModel, table=True):

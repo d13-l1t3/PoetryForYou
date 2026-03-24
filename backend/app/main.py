@@ -78,7 +78,7 @@ async def voice(
             pass
 
     with get_session() as session:
-        reply_text, suggested, intent = handle_message(session, telegram_id, text)
+        reply_text, suggested, intent = handle_message(session, telegram_id, text, is_voice=True)
         log_interaction(session, telegram_id, f"[voice]{text}", reply_text, intent)
 
         user = session.exec(select(User).where(User.telegram_id == telegram_id)).first()

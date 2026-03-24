@@ -22,6 +22,7 @@ class ExternalPoem:
     language: str = "ru"
     tags: str = ""
     difficulty: int = 2
+    audio_url: str = ""  # URL to professional reading (YouTube etc.)
 
 
 class LiteraRuSearch:

@@ -72,6 +72,38 @@ def _split_into_chunks(text: str, max_lines: int = 4) -> list[str]:
     return chunks if chunks else [text or ""]
 
 
+def _make_hint(chunk: str, level: int) -> str:
+    """Create progressive cloze-delete hint from a chunk.
+    
+    level 1: hide ~60% of words (show first word of each line + every 3rd word)
+    level 2: hide ~30% of words (show first word of each line + every 2nd word)  
+    level 3: show full text
+    """
+    if level >= 3:
+        return chunk
+    
+    lines = chunk.split('\n')
+    result_lines = []
+    for line in lines:
+        words = line.split()
+        if not words:
+            result_lines.append(line)
+            continue
+        new_words = []
+        for i, word in enumerate(words):
+            if i == 0:
+                # Always show first word of each line as anchor
+                new_words.append(word)
+            elif level == 1 and i % 3 == 0:
+                new_words.append(word)
+            elif level == 2 and i % 2 == 0:
+                new_words.append(word)
+            else:
+                new_words.append('___')
+        result_lines.append(' '.join(new_words))
+    return '\n'.join(result_lines)
+
+
 def _find_poem_by_query(session: Session, query: str, lang_pref: str) -> Optional[Poem]:
     """Find poem by query with title priority matching."""
     # Extract poem title from query if it's wrapped in quotes or after colon
@@ -607,7 +639,8 @@ def _get_progress_response(session: Session, user: User, temp_memory) -> Tuple[s
 def handle_message(
     session: Session, 
     telegram_id: int, 
-    text: Optional[str]
+    text: Optional[str],
+    is_voice: bool = False
 ) -> Tuple[str, List[str], str]:
     """
     Main message handler with support for:
@@ -810,11 +843,14 @@ def handle_message(
                     # Don't call get_next_chunk() here! The chunk was already
                     # consumed when it was displayed. Just switch to testing.
                     user.stage = "testing_chunk"
+                    active_session.hint_count = 0  # Reset hints for new testing round
                     session.add(user)
                     session.commit()
                     lang = user.language_pref
+                    # Visual separator to bury the chunk text above
+                    separator = "\n" * 6 + "━" * 20 + "\n\n"
                     return (
-                        f"👂\n\n{t('test_prompt', lang)}",
+                        f"{separator}👂 {t('test_prompt', lang)}",
                         buttons("testing", lang),
                         "testing"
                     )
@@ -854,8 +890,12 @@ def handle_message(
                 if current:
                     lang = user.language_pref
                     if user.stage == "testing_chunk":
+                        # Progressive hints: level increases each time
+                        active_session.hint_count += 1
+                        hint_text = _make_hint(current, active_session.hint_count)
+                        level_label = f" ({active_session.hint_count}/3)" if active_session.hint_count < 3 else " (полный текст)" if lang == "ru" else " (full text)"
                         return (
-                            t("hint", lang, chunk=current),
+                            t("hint", lang, chunk=hint_text) + level_label,
                             buttons("testing", lang),
                             "testing"
                         )
@@ -1015,7 +1055,7 @@ def handle_message(
     if active_session:
         # Check if user is trying to reproduce the chunk (testing phase)
         if user.stage == "testing_chunk" and raw and not raw.startswith("/"):
-            return _check_chunk_reproduction(session, user, active_session, raw)
+            return _check_chunk_reproduction(session, user, active_session, raw, is_voice=is_voice)
         
         # AUTO-TEST: If user sends free text/voice during learning phase,
         # treat it as a reproduction attempt (auto-enter testing)
@@ -1025,7 +1065,7 @@ def handle_message(
             user.stage = "testing_chunk"
             session.add(user)
             session.commit()
-            return _check_chunk_reproduction(session, user, active_session, raw)
+            return _check_chunk_reproduction(session, user, active_session, raw, is_voice=is_voice)
     
     # === IDLE INTENTS: NEW POEM SEARCH (check first before resume) ===
     # Skip LLM classification for single digits (poem selection)
@@ -1191,11 +1231,14 @@ def _start_poem_learning(session: Session, user: User, temp_memory) -> Tuple[str
     total_chunks = len(active_session.chunks)
     
     lang = user.language_pref
+    audio_line = ""
+    if hasattr(poem, 'audio_url') and poem.audio_url:
+        audio_line = f"\n\n🎧 {t('listen_reading', lang)}: {poem.audio_url}"
     return (
         f"📜 {poem.title} — {poem.author}\n\n"
         f"{t('chunk_part', lang, current=1, total=total_chunks)}\n\n"
         f"{first_chunk}\n\n"
-        f"{t('memorize_prompt', lang)}",
+        f"{t('memorize_prompt', lang)}{audio_line}",
         buttons("learning", lang),
         "learning"
     )
@@ -1328,7 +1371,7 @@ def _start_review(session: Session, user: User, temp_memory) -> Tuple[str, List[
     )
 
 
-def _check_chunk_reproduction(session: Session, user: User, active_session: ActivePoemSession, user_text: str) -> Tuple[str, List[str], str]:
+def _check_chunk_reproduction(session: Session, user: User, active_session: ActivePoemSession, user_text: str, is_voice: bool = False) -> Tuple[str, List[str], str]:
     """Check if user correctly reproduced the current chunk."""
     test_idx = active_session.current_chunk_index - 1
     if test_idx >= 0 and test_idx < len(active_session.chunks):
@@ -1341,7 +1384,9 @@ def _check_chunk_reproduction(session: Session, user: User, active_session: Acti
     lang = user.language_pref
     score = _score_answer(current_chunk, user_text)
     
-    if score >= 0.7:
+    # Voice input gets a more relaxed threshold since Whisper may misrecognize words
+    threshold = 0.55 if is_voice else 0.7
+    if score >= threshold:
         # Good enough! Mark as learned and move to next chunk
         active_session.mark_current_chunk_learned()
         user.stage = "learning_chunk"

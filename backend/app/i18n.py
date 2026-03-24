@@ -234,6 +234,12 @@ _STRINGS = {
         "en": "Language: {language}.\nWhat would you like to do?",
     },
 
+    # Audio reference
+    "listen_reading": {
+        "ru": "Послушай профессиональное чтение",
+        "en": "Listen to a professional reading",
+    },
+
 }
 
 
