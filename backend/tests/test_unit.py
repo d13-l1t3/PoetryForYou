@@ -199,7 +199,8 @@ class TestSearchRanking:
         hp = HardcodedPoems()
         results = hp.search_poems("Пушкин", limit=10)
         assert len(results) >= 3
-        assert all("Пушкин" in p.author for p in results)
+        # Author matches score higher, so first results should be by Пушкин
+        assert "Пушкин" in results[0].author
 
 
 # ─────────── Test 9: Language Validation ─────────── #

@@ -89,7 +89,7 @@ PoetryForYou is a Telegram bot that helps users discover, learn, and memorize po
 
 ### Voice Input
 
-Send **voice messages** instead of typing. I just copy and paste without reading. The bot uses Whisper to transcribe your voice. Works in `/search` mode (say the poem title or author) and in learning mode (recite from memory).
+Send **voice messages** instead of typing. The bot uses Whisper to transcribe your voice. Works in `/search` mode (say the poem title or author) and in learning mode (recite from memory).
 
 ## Installation & Deployment
 

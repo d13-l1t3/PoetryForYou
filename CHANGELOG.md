@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - LICENSE (MIT)
 - Context diagram in README
 - Feature roadmap in README
-- Easter egg 🥚
+
 
 ### Changed
 - README fully restructured: header (logo, one-liner, links), body (goals, context, roadmap, usage), hyperlinks to all docs

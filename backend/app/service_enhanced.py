@@ -54,6 +54,24 @@ def _get_first_lines(text: str, lines_count: int = 2) -> str:
     return ' / '.join(lines[:lines_count]) if lines else "..."
 
 
+def _split_into_chunks(text: str, max_lines: int = 4) -> list[str]:
+    """Split poem text into learning chunks by stanzas or fixed line count."""
+    decoded = _decode_newlines(text)
+    # Try splitting by stanzas (double newlines)
+    stanzas = [s.strip() for s in decoded.split('\n\n') if s.strip()]
+    if len(stanzas) > 1:
+        return stanzas
+    # Fall back to splitting by N lines
+    lines = [l for l in decoded.split('\n') if l.strip()]
+    if not lines:
+        return [text or ""]
+    chunks = []
+    for i in range(0, len(lines), max_lines):
+        chunk = '\n'.join(lines[i:i + max_lines])
+        chunks.append(chunk)
+    return chunks if chunks else [text or ""]
+
+
 def _find_poem_by_query(session: Session, query: str, lang_pref: str) -> Optional[Poem]:
     """Find poem by query with title priority matching."""
     # Extract poem title from query if it's wrapped in quotes or after colon
