@@ -157,9 +157,22 @@ async def send_reply(update: Update, context: ContextTypes.DEFAULT_TYPE, data: d
     reply = data.get("reply", {}) or {}
     text = reply.get("text", "")
     suggested = reply.get("suggested_replies", []) or []
+    delete_previous = data.get("delete_previous", False)
 
     if not text:
         text = "🤔 Что-то пошло не так. Попробуй /help"
+
+    # Delete the previous bot message if flagged (e.g. after /next to hide chunk text)
+    if delete_previous and update.effective_chat:
+        last_msg_id = context.chat_data.get("last_bot_msg_id") if context.chat_data is not None else None
+        if last_msg_id:
+            try:
+                await context.bot.delete_message(
+                    chat_id=update.effective_chat.id,
+                    message_id=last_msg_id,
+                )
+            except Exception:
+                pass  # Message may be too old or already deleted
 
     # Pick parse mode: HTML for spoiler tags, Markdown for everything else
     if "<tg-spoiler>" in text:
@@ -168,19 +181,24 @@ async def send_reply(update: Update, context: ContextTypes.DEFAULT_TYPE, data: d
         parse_mode = "Markdown"
 
     # Try with chosen parse mode first, fall back to plain text
+    sent_msg = None
     try:
         if suggested:
             kb = _build_keyboard(suggested)
-            await update.message.reply_text(text, reply_markup=kb, parse_mode=parse_mode)
+            sent_msg = await update.message.reply_text(text, reply_markup=kb, parse_mode=parse_mode)
         else:
-            await update.message.reply_text(text, parse_mode=parse_mode)
+            sent_msg = await update.message.reply_text(text, parse_mode=parse_mode)
     except Exception:
         # Parse failed — send as plain text
         if suggested:
             kb = _build_keyboard(suggested)
-            await update.message.reply_text(text, reply_markup=kb)
+            sent_msg = await update.message.reply_text(text, reply_markup=kb)
         else:
-            await update.message.reply_text(text)
+            sent_msg = await update.message.reply_text(text)
+
+    # Track the message ID for potential future deletion
+    if sent_msg and context.chat_data is not None:
+        context.chat_data["last_bot_msg_id"] = sent_msg.message_id
 
 
 async def on_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

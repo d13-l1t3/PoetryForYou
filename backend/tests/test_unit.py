@@ -243,19 +243,21 @@ class TestNormalizeEdgeCases:
 # ─────────── Test 11: Telegram Spoiler Hints ─────────── #
 
 class TestMakeHint:
-    def test_wraps_in_spoiler_tags(self):
+    def test_wraps_each_word_in_spoiler(self):
         from app.service_enhanced import _make_hint
-        chunk = "Мороз и солнце; день чудесный!"
-        result = _make_hint(chunk, 1)
-        assert result == f"<tg-spoiler>{chunk}</tg-spoiler>"
+        result = _make_hint("Мороз и солнце", 1)
+        assert "<tg-spoiler>Мороз</tg-spoiler>" in result
+        assert "<tg-spoiler>и</tg-spoiler>" in result
+        assert "<tg-spoiler>солнце</tg-spoiler>" in result
 
-    def test_preserves_chunk_content(self):
+    def test_punctuation_not_spoilered(self):
         from app.service_enhanced import _make_hint
-        chunk = "Мороз и солнце\nдень чудесный"
-        result = _make_hint(chunk, 1)
-        assert chunk in result
-        assert result.startswith("<tg-spoiler>")
-        assert result.endswith("</tg-spoiler>")
+        result = _make_hint("Привет, мир!", 1)
+        # Comma and exclamation should NOT be inside spoiler tags
+        assert "<tg-spoiler>,</tg-spoiler>" not in result
+        assert "<tg-spoiler>!</tg-spoiler>" not in result
+        assert "," in result
+        assert "!" in result
 
 
 # ─────────── Test 12: Score Answer ignores punctuation ─────────── #

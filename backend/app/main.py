@@ -46,10 +46,14 @@ def message(payload: IncomingMessage) -> MessageResponse:
         user = session.exec(select(User).where(User.telegram_id == payload.telegram_id)).first()
         stage = user.stage if user else "unknown"
 
+    # Delete previous bot message when entering testing mode (/next pressed)
+    should_delete = stage == "testing_chunk" and payload.text and payload.text.strip().lower() in ("/next", "/дальше")
+
     return MessageResponse(
         reply={"text": reply_text, "suggested_replies": suggested},
         intent=intent,
         stage=stage,
+        delete_previous=should_delete,
     )
 
 

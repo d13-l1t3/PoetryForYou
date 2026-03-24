@@ -75,10 +75,24 @@ def _split_into_chunks(text: str, max_lines: int = 4) -> list[str]:
 def _make_hint(chunk: str, level: int) -> str:
     """Create a Telegram spoiler hint from a chunk.
     
-    Uses <tg-spoiler> HTML tag so text appears blurred in Telegram.
-    User taps to reveal the hidden text.
+    Each word is wrapped individually in <tg-spoiler> so the user
+    can tap specific words to reveal them.  Punctuation stays visible.
     """
-    return f"<tg-spoiler>{chunk}</tg-spoiler>"
+    import re
+    lines = chunk.split('\n')
+    result_lines = []
+    for line in lines:
+        # Split into tokens keeping punctuation separate
+        tokens = re.findall(r"[A-Za-zА-Яа-яёЁ0-9']+|[^\s]", line)
+        out = []
+        for token in tokens:
+            # If it's a word (has letters), spoiler it; punctuation stays
+            if re.search(r'[A-Za-zА-Яа-яёЁ]', token):
+                out.append(f"<tg-spoiler>{token}</tg-spoiler>")
+            else:
+                out.append(token)
+        result_lines.append(' '.join(out))
+    return '\n'.join(result_lines)
 
 
 def _find_poem_by_query(session: Session, query: str, lang_pref: str) -> Optional[Poem]:

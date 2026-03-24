@@ -22,5 +22,6 @@ class MessageResponse(BaseModel):
     reply: BotReply
     intent: str
     stage: str
+    delete_previous: bool = False  # Signal bot to delete its last message
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
