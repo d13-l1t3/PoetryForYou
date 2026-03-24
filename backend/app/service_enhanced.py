@@ -73,35 +73,12 @@ def _split_into_chunks(text: str, max_lines: int = 4) -> list[str]:
 
 
 def _make_hint(chunk: str, level: int) -> str:
-    """Create progressive cloze-delete hint from a chunk.
+    """Create a Telegram spoiler hint from a chunk.
     
-    level 1: hide ~60% of words (show first word of each line + every 3rd word)
-    level 2: hide ~30% of words (show first word of each line + every 2nd word)  
-    level 3: show full text
+    Uses <tg-spoiler> HTML tag so text appears blurred in Telegram.
+    User taps to reveal the hidden text.
     """
-    if level >= 3:
-        return chunk
-    
-    lines = chunk.split('\n')
-    result_lines = []
-    for line in lines:
-        words = line.split()
-        if not words:
-            result_lines.append(line)
-            continue
-        new_words = []
-        for i, word in enumerate(words):
-            if i == 0:
-                # Always show first word of each line as anchor
-                new_words.append(word)
-            elif level == 1 and i % 3 == 0:
-                new_words.append(word)
-            elif level == 2 and i % 2 == 0:
-                new_words.append(word)
-            else:
-                new_words.append('___')
-        result_lines.append(' '.join(new_words))
-    return '\n'.join(result_lines)
+    return f"<tg-spoiler>{chunk}</tg-spoiler>"
 
 
 def _find_poem_by_query(session: Session, query: str, lang_pref: str) -> Optional[Poem]:
@@ -890,12 +867,11 @@ def handle_message(
                 if current:
                     lang = user.language_pref
                     if user.stage == "testing_chunk":
-                        # Progressive hints: level increases each time
-                        active_session.hint_count += 1
-                        hint_text = _make_hint(current, active_session.hint_count)
-                        level_label = f" ({active_session.hint_count}/3)" if active_session.hint_count < 3 else " (полный текст)" if lang == "ru" else " (full text)"
+                        # Send chunk as Telegram spoiler (blurred text, tap to reveal)
+                        hint_text = _make_hint(current, 1)
+                        label = "👆 " + ("Нажми чтобы подсмотреть" if lang == "ru" else "Tap to peek")
                         return (
-                            t("hint", lang, chunk=hint_text) + level_label,
+                            f"{label}\n\n{hint_text}",
                             buttons("testing", lang),
                             "testing"
                         )

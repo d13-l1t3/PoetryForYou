@@ -240,25 +240,22 @@ class TestNormalizeEdgeCases:
         assert "!" not in result
 
 
-# ─────────── Test 11: Progressive Hints ─────────── #
+# ─────────── Test 11: Telegram Spoiler Hints ─────────── #
 
 class TestMakeHint:
-    def test_level3_returns_full(self):
+    def test_wraps_in_spoiler_tags(self):
         from app.service_enhanced import _make_hint
         chunk = "Мороз и солнце; день чудесный!"
-        assert _make_hint(chunk, 3) == chunk
+        result = _make_hint(chunk, 1)
+        assert result == f"<tg-spoiler>{chunk}</tg-spoiler>"
 
-    def test_level1_hides_most(self):
+    def test_preserves_chunk_content(self):
         from app.service_enhanced import _make_hint
-        result = _make_hint("Мороз и солнце день чудесный", 1)
-        assert "___" in result
-        assert result.startswith("Мороз")  # First word always visible
-
-    def test_level2_hides_some(self):
-        from app.service_enhanced import _make_hint
-        result = _make_hint("Мороз и солнце день чудесный", 2)
-        assert "___" in result
-        assert result.startswith("Мороз")
+        chunk = "Мороз и солнце\nдень чудесный"
+        result = _make_hint(chunk, 1)
+        assert chunk in result
+        assert result.startswith("<tg-spoiler>")
+        assert result.endswith("</tg-spoiler>")
 
 
 # ─────────── Test 12: Score Answer ignores punctuation ─────────── #

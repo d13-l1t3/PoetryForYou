@@ -161,15 +161,21 @@ async def send_reply(update: Update, context: ContextTypes.DEFAULT_TYPE, data: d
     if not text:
         text = "🤔 Что-то пошло не так. Попробуй /help"
 
-    # Try Markdown first, fall back to plain text
+    # Pick parse mode: HTML for spoiler tags, Markdown for everything else
+    if "<tg-spoiler>" in text:
+        parse_mode = "HTML"
+    else:
+        parse_mode = "Markdown"
+
+    # Try with chosen parse mode first, fall back to plain text
     try:
         if suggested:
             kb = _build_keyboard(suggested)
-            await update.message.reply_text(text, reply_markup=kb, parse_mode="Markdown")
+            await update.message.reply_text(text, reply_markup=kb, parse_mode=parse_mode)
         else:
-            await update.message.reply_text(text, parse_mode="Markdown")
+            await update.message.reply_text(text, parse_mode=parse_mode)
     except Exception:
-        # Markdown parsing failed — send as plain text
+        # Parse failed — send as plain text
         if suggested:
             kb = _build_keyboard(suggested)
             await update.message.reply_text(text, reply_markup=kb)
